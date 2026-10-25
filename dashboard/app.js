@@ -69,7 +69,7 @@ const STATUS = {
   pending: { label: 'Waiting', tone: 'grey', icon: 'clock' },
   running: { label: 'Running', tone: 'indigo', icon: 'spin' },
   stopped: { label: 'Stopped', tone: 'grey', icon: 'square' },
-  notrun: { label: 'Not run', tone: 'grey', icon: 'minus' },
+  notrun: { label: 'Not run', tone: 'grey', icon: 'circleDashed' },
 };
 
 const ANSWERS = [
@@ -107,6 +107,11 @@ const SCREEN_TIPS = {
 
 const ICONS = {
   check: ['M20 6 9 17l-5-5'],
+  chevDown: ['m6 9 6 6 6-6'],
+  panelLeft: ['M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z', 'M9 3v18'],
+  command: ['M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3'],
+  search: ['M11 3a8 8 0 1 0 0 16a8 8 0 1 0 0-16', 'm21 21-4.3-4.3'],
+  circleDashed: ['M10.1 2.2a10 10 0 0 1 3.8 0', 'M17.6 3.7a10 10 0 0 1 2.7 2.7', 'M21.8 10.1a10 10 0 0 1 0 3.8', 'M20.3 17.6a10 10 0 0 1-2.7 2.7', 'M13.9 21.8a10 10 0 0 1-3.8 0', 'M6.4 20.3a10 10 0 0 1-2.7-2.7', 'M2.2 13.9a10 10 0 0 1 0-3.8', 'M3.7 6.4a10 10 0 0 1 2.7-2.7'],
   x: ['M18 6 6 18', 'm6 6 12 12'],
   minus: ['M5 12h14'],
   alert: ['m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3', 'M12 9v4', 'M12 17h.01'],
@@ -644,6 +649,17 @@ const S = {
   progress: null,
   conn: 'ok',
   copilotOpen: store('copilot') ?? true,
+  copilotOpenM: false,
+  lsbOpen: store('lsb') ?? true,
+  lsbOpenM: false,
+  lsbW: store('lsbW') || 264,
+  rpanel: store('rpanel') || 'check',
+  treeOpen: new Set(store('tree') || ['auto', 'manual']),
+  treeQ: '',
+  panes: [],
+  focus: 0,
+  drag: null,
+  helpOpen: false,
   navOpen: false,
   healthOpen: false,
   switchOpen: false,
@@ -834,39 +850,9 @@ function thumb(file, list, cls = '') {
     h('img', { src: shotSrc(file), alt: '', loading: 'lazy', decoding: 'async' }));
 }
 
-/* ------------------------------------------------------------------ top bar */
+/* ------------------------------------------------------------------ shell: ribbon, sidebars, status bar (Obsidian-style) */
 
-function renderTopbar() {
-  const p = plan();
-  const health = S.data.health || [];
-  const bad = health.filter((x) => !x.ok);
-  const top = $('#topbar');
-  fill(top, 
-    h('button', { type: 'button', class: 'icon-btn nav-toggle', 'aria-label': 'Open menu', 'aria-expanded': String(S.navOpen), 'aria-controls': 'sidenav', onClick: () => { S.navOpen = !S.navOpen; renderShell(); } }, icon('menu', 20)),
-    h('a', { class: 'brand', href: '#overview', 'aria-label': 'Anvil', title: 'Anvil' }, brandMark(24)),
-    h('div', { class: 'tb-title' },
-      h('div', { class: 'tb-line1' },
-        h('a', { class: 'tb-pr', href: env().prUrl || p.url, target: '_blank', rel: 'noopener noreferrer', title: 'Open the pull request on GitHub' }, `PR #${p.pr}`),
-        h('span', { class: 'tb-name', text: p.title })),
-      h('div', { class: 'tb-line2' },
-        h('span', { class: 'tb-people' }, h('span', { text: p.author }), icon('arrowRight', 12), h('span', { text: p.tester })),
-        h('span', { class: 'tb-sep', 'aria-hidden': 'true' }, '·'),
-        h('code', { class: 'tb-commit', title: 'Commit being tested', text: String(p.commit || '').slice(0, 7) }),
-        (p.lanes || []).map((l) => chip(l, 'chip-lane')))),
-    h('div', { class: 'tb-right' },
-      switchMenu(),
-      S.mode === 'mock' ? h('span', { class: 'chip chip-mock', title: S.fallback ? 'The QA server did not answer, so this is sample data.' : 'Sample data (?mock=1)' }, 'Sample data') : null,
-      h('div', { class: 'health' },
-        h('button', { type: 'button', class: `health-btn ${bad.length ? 'has-bad' : ''}`, 'aria-expanded': String(S.healthOpen), 'aria-controls': 'health-panel', onClick: () => { S.healthOpen = !S.healthOpen; renderTopbar(); },
-          'aria-label': bad.length ? `${plural(bad.length, 'problem')} with your setup. Show details` : 'Setup is healthy. Show details' },
-          h('span', { class: 'dots' }, health.map((x) => h('span', { class: `dot ${x.ok ? 'dot-ok' : 'dot-bad'}`, title: `${HEALTH_NAME[x.id] || x.id}: ${x.ok ? 'OK' : 'problem'}` }))),
-          h('span', { class: 'health-label', text: bad.length ? plural(bad.length, 'problem') : 'All good' })),
-        S.healthOpen ? healthPanel(health) : null),
-      h('button', { type: 'button', class: `icon-btn copilot-toggle ${S.copilotOpen ? 'is-on' : ''}`, 'aria-label': S.copilotOpen ? 'Hide co-pilot' : 'Show co-pilot', 'aria-expanded': String(S.copilotOpen), 'aria-controls': 'copilot', onClick: toggleCopilot }, icon('sparkles', 18), h('span', { class: 'copilot-toggle-label', text: 'Co-pilot' }))),
-  );
-}
-
-// Anvil mark: plain black anvil silhouette (horn left, flat face, waist, wide base). Decorative; the link carries the name.
+// Anvil mark: plain black anvil silhouette (horn left, flat face, waist, wide base). Decorative; the button carries the name.
 const ANVIL_PATH = 'M8 4.5H22.5V9H19L16.5 13.5H19L21.5 19.5H6.5L9 13.5H12L10.5 9C7 9 3.8 7.8 1 5.6C3.3 4.9 5.6 4.5 8 4.5Z';
 function brandMark(size = 22) {
   const svg = document.createElementNS(SVGNS, 'svg');
@@ -883,16 +869,120 @@ function brandMark(size = 22) {
   return svg;
 }
 
-// Other PRs assigned to this tester (from /api/next). Switching is done by Claude: "start anvil <n>".
-function switchMenu() {
-  const others = (S.next || []).filter((n) => Number(n.number) !== Number(plan().pr));
-  if (!others.length) return null;
-  return h('div', { class: 'switch-pr' },
-    h('button', { type: 'button', class: 'btn btn-ghost btn-sm switch-btn', 'aria-expanded': String(S.switchOpen), 'aria-controls': 'switch-panel', onClick: () => { S.switchOpen = !S.switchOpen; S.healthOpen = false; renderTopbar(); } },
-      icon('pr', 15), h('span', { class: 'switch-label', text: 'Switch PR' }), h('span', { class: 'nav-badge nb-grey', text: others.length })),
-    S.switchOpen ? h('div', { class: 'popover switch-panel', id: 'switch-panel', role: 'dialog', 'aria-label': 'Other PRs assigned to you' },
-      h('div', { class: 'popover-head' }, h('strong', { text: 'Also assigned to you' }), h('button', { type: 'button', class: 'icon-btn', 'aria-label': 'Close', onClick: () => { S.switchOpen = false; renderTopbar(); } }, icon('x', 16))),
-      h('p', { class: 'muted small', text: 'To test another PR, go back to Claude Code and tell it the command shown. Anvil then reopens on that PR.' }),
+const VIEW_META = {
+  test: { label: 'Test view', icon: 'monitor' },
+  overview: { label: 'Overview', icon: 'home' },
+  auto: { label: 'Automatic checks', icon: 'zap' },
+  manual: { label: 'Your checks', icon: 'clipboard' },
+  screens: { label: 'Screens', icon: 'image' },
+  tools: { label: 'Tools', icon: 'wrench' },
+  complete: { label: 'Complete', icon: 'send' },
+  sent: { label: 'Sent', icon: 'check' },
+};
+const isMobile = () => matchMedia('(max-width: 760px)').matches;
+const isNarrow = () => matchMedia('(max-width: 1199px)').matches;
+const viewOf = (key) => String(key || '').split(':')[0];
+const argOf = (key) => { const s = String(key || ''); const i = s.indexOf(':'); return i < 0 ? '' : s.slice(i + 1); };
+const manualById = (id) => (plan().manual || []).find((m) => m.id === id) || null;
+
+function keyLabel(key) {
+  const v = viewOf(key);
+  const a = argOf(key);
+  if (v === 'check') return checkById(a)?.name || a;
+  if (v === 'item') return manualById(a)?.title || a;
+  return VIEW_META[v]?.label || v;
+}
+function keyGlyph(key) {
+  const v = viewOf(key);
+  if (v === 'check') { const c = checkById(argOf(key)); return c ? statusGlyph(checkStatus(c), !!c.override) : icon('zap', 14); }
+  if (v === 'item') { const m = manualById(argOf(key)); return answerGlyph(m ? state().manual?.[m.id]?.answer : null); }
+  return icon(VIEW_META[v]?.icon || 'file', 14);
+}
+function hashOf(key) { const v = viewOf(key); const a = argOf(key); return a ? `#${v}/${encodeURIComponent(a)}` : `#${v}`; }
+function validKey(key) {
+  const v = viewOf(key);
+  if (v === 'check') return !!checkById(argOf(key));
+  if (v === 'item') return !!manualById(argOf(key));
+  return v in VIEW_META;
+}
+function focusedPane() { return S.panes[Math.min(S.focus, S.panes.length - 1)]; }
+function go(key) { const hsh = hashOf(key); if (location.hash === hsh) route(); else location.hash = hsh; }
+function tvShown() { return !!(TV.root && TV.root.isConnected); }
+function saveWs() { if (S.data) store(`ws:${plan().pr}`, { panes: S.panes, focus: S.focus }); }
+function leftOpen() { return isMobile() ? S.lsbOpenM : S.lsbOpen; }
+function rightOpen() { return isMobile() || isNarrow() ? S.copilotOpenM : S.copilotOpen; }
+function setRight(open) {
+  if (isMobile() || isNarrow()) S.copilotOpenM = open;
+  else { S.copilotOpen = open; store('copilot', open); }
+  if (open && isMobile()) S.lsbOpenM = false;
+  render();
+}
+function toggleCopilot() { setRight(!rightOpen()); }
+function toggleLeft() {
+  if (isMobile()) { S.lsbOpenM = !S.lsbOpenM; if (S.lsbOpenM) S.copilotOpenM = false; }
+  else { S.lsbOpen = !S.lsbOpen; store('lsb', S.lsbOpen); }
+  render();
+}
+function showRightPanel(panel) { S.rpanel = panel; store('rpanel', panel); setRight(true); }
+
+// Status glyphs: shape + fill, never colour (pass = check, fail = solid disc with x, warn = triangle ...)
+function statusGlyph(st, mine = false) {
+  const s = STATUS[st] || STATUS.pending;
+  return h('span', { class: `sg sg-${st} ${mine ? 'sg-mine' : ''}`, 'aria-hidden': 'true' }, icon(mine ? 'user' : s.icon, 12));
+}
+function answerGlyph(a) {
+  const map = { works: 'check', broken: 'x', unsure: 'help' };
+  return h('span', { class: `sg sg-${a || 'open'}`, 'aria-hidden': 'true' }, icon(map[a] || 'circleDashed', 12));
+}
+
+/* ---- left ribbon */
+
+function renderRibbonBar() {
+  const c = counts();
+  const sent = !!state().sent;
+  const act = viewOf(focusedPane()?.active || '');
+  const health = S.data.health || [];
+  const bad = health.filter((x) => !x.ok);
+  const item = (id, label, iconName, extra = {}) => h('button', {
+    type: 'button', class: `rb-item ${act === id ? 'is-active' : ''} ${extra.cls || ''}`, 'aria-label': label, 'data-tip': label, 'aria-current': act === id ? 'page' : null, 'aria-pressed': extra.pressed,
+    onClick: extra.onClick || (() => go(id)),
+  }, extra.iconEl || icon(iconName, 18), extra.badge ? h('span', { class: 'rb-badge', text: extra.badge }) : null);
+  fill($('#ribbonbar'),
+    h('button', { type: 'button', class: 'rb-item rb-logo', 'aria-label': 'Anvil: overview', 'data-tip': 'Anvil', onClick: () => go('overview') }, brandMark(20)),
+    item('lsb', leftOpen() ? 'Hide the item list' : 'Show the item list', 'panelLeft', { onClick: toggleLeft, pressed: String(leftOpen()), cls: leftOpen() ? 'is-on' : '' }),
+    h('div', { class: 'rb-sep', 'aria-hidden': 'true' }),
+    item('test', 'Test view', 'monitor'),
+    item('overview', 'Overview', 'home', { cls: 'rb-mhide' }),
+    item('auto', 'Automatic checks', 'zap', { badge: c.autoFail ? String(c.autoFail) : '' }),
+    item('manual', 'Your checks', 'clipboard', { badge: c.manOpen ? String(c.manOpen) : '' }),
+    item('screens', 'Screens', 'image', { cls: 'rb-mhide' }),
+    item('tools', 'Tools', 'wrench', { cls: 'rb-mhide' }),
+    sent ? item('sent', 'Sent', 'check') : item('complete', 'Complete', 'send'),
+    h('div', { class: 'rb-spacer' }),
+    item('palette', 'Command palette (Ctrl+P)', 'command', { onClick: openPalette }),
+    item('health', bad.length ? `${plural(bad.length, 'problem')} with your setup` : 'Setup is healthy', null, { cls: 'rb-mhide', iconEl: bad.length ? icon('alert', 18) : h('span', { class: 'health-dot' }), onClick: () => { S.healthOpen = !S.healthOpen; S.helpOpen = false; renderPopovers(); } }),
+    item('copilot', rightOpen() ? 'Hide the right sidebar' : 'Show the right sidebar', 'panel', { onClick: toggleCopilot, pressed: String(rightOpen()), cls: rightOpen() ? 'is-on' : '' }),
+    item('help', 'Help and shortcuts', 'help', { cls: 'rb-mhide', onClick: () => { S.helpOpen = !S.helpOpen; S.healthOpen = false; renderPopovers(); } }),
+  );
+}
+
+function renderPopovers() {
+  if (!S.data) return;
+  fill($('#popovers'), S.healthOpen ? healthPanel(S.data.health || []) : null, S.helpOpen ? helpPanel() : null);
+}
+
+function helpPanel() {
+  const others = (S.next || []).filter((n) => Number(n.number) !== Number(plan().pr) && !n.current);
+  const mod = /Mac|iPhone|iPad/.test(navigator.platform || '') ? '\u2318' : 'Ctrl';
+  return h('div', { class: 'popover help-panel', role: 'dialog', 'aria-label': 'Help and shortcuts' },
+    h('div', { class: 'popover-head' }, h('strong', { text: 'Help' }), h('button', { type: 'button', class: 'icon-btn', 'aria-label': 'Close', onClick: () => { S.helpOpen = false; renderPopovers(); } }, icon('x', 16))),
+    h('p', { class: 'small muted', text: proj().helpText }),
+    h('ul', { class: 'shortcut-list' },
+      h('li', null, h('span', { text: 'Command palette' }), h('span', null, h('kbd', { text: mod }), ' ', h('kbd', { text: 'P' }))),
+      h('li', null, h('span', { text: 'Close a tab' }), h('span', { class: 'small muted', text: 'middle-click it, or \u00d7' })),
+      h('li', null, h('span', { text: 'Move a tab' }), h('span', { class: 'small muted', text: 'drag it' })),
+      h('li', null, h('span', { text: 'Close a panel or popup' }), h('kbd', { text: 'Esc' }))),
+    others.length ? h('div', { class: 'stack' }, h('div', { class: 'mini-h', text: 'Also assigned to you' }),
       h('ul', { class: 'next-list' }, others.map((n) => h('li', { class: 'next-item' },
         h('div', null, h('a', { href: n.url, target: '_blank', rel: 'noopener noreferrer', class: 'strong-link', text: `#${n.number} ${n.title}` }), h('p', { class: 'muted small' }, 'Tell Claude: ', h('code', { text: `start anvil ${n.number}` }))),
         btn('', { size: 'sm', kind: 'ghost', iconName: 'copy', onClick: () => copyText(`start anvil ${n.number}`, 'Command copied'), attrs: { 'aria-label': `Copy start anvil ${n.number}` } }))))) : null);
@@ -900,7 +990,7 @@ function switchMenu() {
 
 function healthPanel(health) {
   return h('div', { class: 'popover health-panel', id: 'health-panel', role: 'dialog', 'aria-label': 'Setup health' },
-    h('div', { class: 'popover-head' }, h('strong', { text: 'Your setup' }), h('button', { type: 'button', class: 'icon-btn', 'aria-label': 'Close', onClick: () => { S.healthOpen = false; renderTopbar(); } }, icon('x', 16))),
+    h('div', { class: 'popover-head' }, h('strong', { text: 'Your setup' }), h('button', { type: 'button', class: 'icon-btn', 'aria-label': 'Close', onClick: () => { S.healthOpen = false; renderPopovers(); } }, icon('x', 16))),
     health.length ? null : h('p', { class: 'muted', text: 'No health information yet.' }),
     health.map((x) => {
       const cmd = /`([^`]+)`/.exec(x.fix || '')?.[1];
@@ -925,46 +1015,110 @@ async function recheckHealth() {
   } catch (e) { toast(e.message, 'error'); }
 }
 
-function toggleCopilot() {
-  S.copilotOpen = !S.copilotOpen;
-  store('copilot', S.copilotOpen);
-  renderShell();
+/* ---- left sidebar: the PR as a tree */
+
+const LSB = { built: false, head: null, search: null, tree: null, resize: null };
+
+function buildLeft() {
+  const lsb = $('#lsb');
+  LSB.head = h('div', { class: 'lsb-head' });
+  LSB.search = h('input', { class: 'lsb-search-input', type: 'search', name: 'tree-filter', placeholder: 'Filter checks, pages, screens', 'aria-label': 'Filter the item list', autocomplete: 'off', spellcheck: 'false', onInput: (e) => { S.treeQ = e.target.value; renderTree(); } });
+  LSB.tree = h('nav', { class: 'lsb-tree', 'aria-label': 'Items in this pull request' });
+  LSB.resize = h('div', { class: 'lsb-resize', role: 'separator', 'aria-orientation': 'vertical', 'aria-label': 'Resize the item list', tabindex: 0, 'aria-valuemin': 200, 'aria-valuemax': 440, 'aria-valuenow': S.lsbW });
+  const setW = (w) => { S.lsbW = Math.round(Math.max(200, Math.min(440, w))); $('#app').style.setProperty('--lsb-w', `${S.lsbW}px`); LSB.resize.setAttribute('aria-valuenow', S.lsbW); };
+  LSB.resize.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    LSB.resize.setPointerCapture(e.pointerId);
+    LSB.resize.classList.add('is-drag');
+    const left = lsb.getBoundingClientRect().left;
+    const move = (ev) => setW(ev.clientX - left);
+    const up = () => { LSB.resize.classList.remove('is-drag'); LSB.resize.removeEventListener('pointermove', move); store('lsbW', S.lsbW); if (TV.root) layoutFrame(); };
+    LSB.resize.addEventListener('pointermove', move);
+    LSB.resize.addEventListener('pointerup', up, { once: true });
+  });
+  LSB.resize.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); setW(S.lsbW + (e.key === 'ArrowLeft' ? -16 : 16)); store('lsbW', S.lsbW); }
+  });
+  fill(lsb, LSB.head, h('label', { class: 'lsb-search' }, icon('search', 14), LSB.search), LSB.tree, LSB.resize);
+  LSB.built = true;
 }
 
-/* ------------------------------------------------------------------ side nav */
+function renderLeft() {
+  if (!LSB.built) buildLeft();
+  const p = plan();
+  fill(LSB.head,
+    h('div', { class: 'lsb-pr' }, h('a', { href: env().prUrl || p.url, target: '_blank', rel: 'noopener noreferrer', title: 'Open the pull request on GitHub' }, `PR #${p.pr}`, ' ', icon('external', 11)),
+      h('button', { type: 'button', class: 'icon-btn', 'aria-label': 'Hide the item list', title: 'Hide the item list', onClick: toggleLeft }, icon('panelLeft', 15))),
+    h('div', { class: 'lsb-title', text: p.title }),
+    h('div', { class: 'lsb-meta' }, h('span', { text: p.author }), icon('arrowRight', 11), h('span', { text: p.tester }),
+      p.commit ? h('code', { title: 'Commit being tested', text: String(p.commit).slice(0, 7) }) : null, (p.lanes || []).map((l) => chip(l, 'chip-lane'))));
+  renderTree();
+}
 
-function renderNav() {
-  const c = counts();
-  const sent = !!state().sent;
-  const badges = {
-    auto: c.autoOpen ? { text: `${c.autoTotal - c.autoOpen}/${c.autoTotal}`, tone: 'indigo' } : c.autoFail ? { text: String(c.autoFail), tone: 'red' } : { text: '✓', tone: 'green' },
-    manual: { text: `${c.manTotal - c.manOpen}/${c.manTotal}`, tone: c.manOpen ? 'grey' : 'green' },
-    screens: { text: String(shots().length), tone: 'grey' },
+function renderTree() {
+  if (!LSB.tree || !S.data) return;
+  const q = (S.treeQ || '').trim().toLowerCase();
+  const match = (...t) => !q || t.some((x) => String(x || '').toLowerCase().includes(q));
+  const activeKey = focusedPane()?.active;
+  const leaf = ({ key, label, glyph, meta, onClick, title }) => h('li', null, h('button', {
+    type: 'button', class: `tree-row leaf ${key && key === activeKey ? 'is-active' : ''}`, title: title || label, 'aria-current': key && key === activeKey ? 'true' : null, onClick: onClick || (() => go(key)),
+  }, glyph, h('span', { class: 'tree-label', text: label }), meta ? h('span', { class: 'tree-meta', text: meta }) : null));
+  const folder = (id, label, iconName, count, kids, onOpen) => {
+    const list = kids.filter(Boolean);
+    if (q && !list.length) return null;
+    const open = q ? true : S.treeOpen.has(id);
+    return h('li', { class: 'tree-folder' },
+      h('div', { class: 'tree-frow' },
+        h('button', { type: 'button', class: 'tree-row folder', 'aria-expanded': String(open), onClick: () => { if (S.treeOpen.has(id)) S.treeOpen.delete(id); else S.treeOpen.add(id); store('tree', [...S.treeOpen]); renderTree(); } },
+          icon(open ? 'chevDown' : 'chevRight', 13, 'tree-chev'), iconName ? icon(iconName, 14) : null, h('span', { class: 'tree-label', text: label }), count != null && count !== '' ? h('span', { class: 'tree-count', text: count }) : null),
+        onOpen ? h('button', { type: 'button', class: 'tree-open', 'aria-label': `Open ${label} in a tab`, title: `Open ${label}`, onClick: onOpen }, icon('arrowRight', 12)) : null),
+      open && list.length ? h('ul', { class: 'tree-kids' }, list) : null);
   };
-  const items = VIEWS.map((v) => (v.id === 'complete' && sent ? { id: 'sent', label: 'Sent', icon: 'check' } : v));
-  fill($('#sidenav'), 
-    h('div', { class: 'nav-head' }, h('span', { class: 'nav-kicker' }, h('span', { class: 'nav-mark', role: 'img', 'aria-label': 'Anvil' }, brandMark(18)), h('span', { text: `PR #${plan().pr}` })), h('button', { type: 'button', class: 'icon-btn nav-close', 'aria-label': 'Close menu', onClick: () => { S.navOpen = false; renderShell(); } }, icon('x', 18))),
-    h('ul', { class: 'nav-list' }, items.map((v) => {
-      const b = badges[v.id];
-      const current = S.view === v.id || (v.id === 'sent' && S.view === 'complete');
-      return h('li', null, h('a', { href: `#${v.id}`, class: `nav-item ${current ? 'is-current' : ''}`, 'aria-current': current ? 'page' : null },
-        icon(v.icon, 18), h('span', { class: 'nav-label', text: v.label }), b ? h('span', { class: `nav-badge nb-${b.tone}`, text: b.text }) : null));
-    })),
-    h('div', { class: 'nav-foot' },
-      h('div', { class: 'nav-progress' }, h('div', { class: 'row between' }, h('span', { text: 'Done' }), h('strong', { text: `${c.pct}%` })), progressBar(c.pct, 'Overall progress')),
-      h('p', { class: 'nav-help', text: proj().helpText })),
-  );
+  const c = counts();
+  const checks = results().checks || [];
+  const groups = GROUPS.map((g) => ({ ...g, items: checks.filter((x) => x.group === g.name) })).filter((g) => g.items.length);
+  const other = checks.filter((x) => !GROUPS.some((g) => g.name === x.group));
+  if (other.length) groups.push({ name: 'Other', items: other });
+  const autoKids = groups.map((g) => {
+    const fails = g.items.filter((x) => x.status === 'fail').length;
+    return folder(`g:${g.name}`, g.name, null, fails ? `${fails} failed` : g.items.length,
+      g.items.filter((x) => match(x.name, x.id, g.name)).map((x) => leaf({ key: `check:${x.id}`, label: x.name, glyph: statusGlyph(checkStatus(x), !!x.override), title: `${x.name}: ${x.override ? 'checked by you' : (STATUS[checkStatus(x)] || STATUS.pending).label}` })));
+  });
+  const manual = plan().manual || [];
+  const byPage = new Map();
+  for (const m of manual) { const k = m.page || 'Other'; if (!byPage.has(k)) byPage.set(k, []); byPage.get(k).push(m); }
+  const ans = (m) => state().manual?.[m.id]?.answer || null;
+  const manKids = [...byPage.entries()].map(([pg, items]) => folder(`mp:${pg}`, pg, 'file', `${items.filter(ans).length}/${items.length}`,
+    items.filter((m) => match(m.title, pg, m.role)).map((m) => leaf({ key: `item:${m.id}`, label: m.title, glyph: answerGlyph(ans(m)), title: `${m.title}: ${ans(m) ? ANSWERS.find((a) => a.id === ans(m)).label : 'not answered'}` }))));
+  const pages = plan().pages || [];
+  const pageKids = pages.filter((pg) => match(pg.page, ...(pg.roles || []))).map((pg) => leaf({ label: pg.page, glyph: icon('file', 14), meta: (pg.roles || []).map(cap).join(', '), title: `Open ${pg.page} in the Test view`, onClick: () => openPageInView(pg.page, (pg.roles || [])[0]) }));
+  const all = shots();
+  const shotKids = [...all].reverse().filter((s) => match(s.page, s.role, s.device)).slice(0, 80).map((s) => leaf({ label: s.page, glyph: icon(s.device in DEVICE_SIZE ? s.device : 'image', 14), meta: `${cap(s.role)} \u00b7 ${s.device}`, onClick: () => openLightbox(s.file, all.map((x) => x.file)) }));
+  const tops = [
+    folder('auto', 'Automatic checks', 'zap', `${c.autoTotal - c.autoOpen}/${c.autoTotal}`, autoKids, () => go('auto')),
+    folder('manual', 'Your checks', 'clipboard', `${c.manTotal - c.manOpen}/${c.manTotal}`, manKids, () => go('manual')),
+    folder('pages', 'Pages', 'file', pages.length, pageKids),
+    folder('shots', 'Screenshots', 'image', all.length, shotKids, () => go('screens')),
+  ].filter(Boolean);
+  fill(LSB.tree, tops.length ? h('ul', { class: 'tree' }, tops) : h('p', { class: 'tree-empty', text: q ? `Nothing matches \u201c${S.treeQ}\u201d.` : 'Nothing here yet.' }));
 }
 
-/* ------------------------------------------------------------------ co-pilot */
+function openPageInView(page, role) {
+  if (page) TV.page = page;
+  if (role) TV.role = role;
+  if (tvShown()) tvNavigate({ page, role });
+  go('test');
+}
+
+/* ---- right sidebar: current check, live run, co-pilot */
 
 function statusLine() {
   const c = counts();
-  if (S.conn === 'lost') return { tone: 'red', text: 'Lost the connection to the QA server. Trying again…' };
+  if (S.conn === 'lost') return { tone: 'red', text: 'Lost the connection to the QA server. Trying again\u2026' };
   if (results().running || S.progress) {
     const p = S.progress;
     if (p && p.total) return { tone: 'indigo', text: `Running checks: ${p.label || p.id} (${Math.min(p.done + 1, p.total)} of ${p.total})`, spin: true };
-    return { tone: 'indigo', text: 'Running automatic checks…', spin: true };
+    return { tone: 'indigo', text: 'Running automatic checks\u2026', spin: true };
   }
   if (state().sent) return { tone: 'green', text: 'Report sent. Nice work.' };
   if (results().stopped && notChecked().length) return { tone: 'grey', text: `Checks stopped. ${plural(notChecked().length, 'check')} did not run: run them or check them yourself.` };
@@ -973,20 +1127,339 @@ function statusLine() {
   return { tone: 'grey', text: 'Automatic checks finished.' };
 }
 
-function renderCopilot() {
-  const p = plan();
-  const cp = p.copilot || {};
+function copilotPanel() {
+  const cp = plan().copilot || {};
   const st = statusLine();
-  const section = (title, items, iconName, cls = '') => (items && items.length ? h('section', { class: `cp-section ${cls}` }, h('h3', null, icon(iconName, 15), title), h('ul', null, items.map((t) => h('li', { text: t })))) : null);
-  fill($('#copilot'), 
-    h('div', { class: 'cp-head' }, h('div', { class: 'cp-title' }, icon('sparkles', 16), h('strong', { text: 'Co-pilot' })), h('button', { type: 'button', class: 'icon-btn', 'aria-label': 'Hide co-pilot', onClick: toggleCopilot }, icon('x', 16))),
+  const section = (title, items, iconName, cls = '') => (items && items.length ? h('section', { class: `cp-section ${cls}` }, h('h3', null, icon(iconName, 14), title), h('ul', null, items.map((t) => h('li', { text: t })))) : null);
+  return h('div', { class: 'rs-pad' },
     h('div', { class: `cp-status tone-${st.tone}`, role: 'status' }, st.spin ? icon('spin', 14) : h('span', { class: 'dot', 'aria-hidden': 'true' }), h('span', { text: st.text })),
     h('div', { class: 'cp-tip' }, h('div', { class: 'cp-tip-k', text: 'Tip for this screen' }), h('p', { text: (SCREEN_TIPS[S.view] || SCREEN_TIPS.overview).replace('{example}', proj().pageExample).replace('{chat}', proj().chatName) })),
     section('What this PR does', cp.summary, 'info'),
     section('Added by the developer', cp.extras, 'plus'),
     section('Security notes', cp.security, 'shield', 'cp-security'),
-    section('Testing tips', cp.tips, 'sparkles'),
-  );
+    section('Testing tips', cp.tips, 'sparkles'));
+}
+
+function runPanel() {
+  const r = results();
+  const running = !!r.running;
+  const cur = currentRun();
+  const pr = runProgress();
+  const nc = notChecked();
+  return h('div', { class: 'rs-pad' },
+    h('div', { class: 'rs-run-head' },
+      running ? icon('spin', 15) : statusGlyph(r.stopped ? 'stopped' : 'pass'),
+      h('strong', { text: running ? (cur ? cur.label : 'Starting the checks\u2026') : r.stopped ? `Stopped at ${timeAgo(r.stopped)}` : r.finished ? `Finished at ${timeAgo(r.finished)}` : 'Automatic checks' }),
+      running && cur ? elapsedEl(cur.started) : null),
+    h('div', { class: 'muted small', text: `${pr.done} of ${pr.total} done${!running && nc.length ? ` \u00b7 ${nc.length} not run` : ''}` }),
+    progressBar(pr.total ? Math.round((pr.done / pr.total) * 100) : 0, 'Run progress'),
+    h('div', { class: 'row gap-s wrap' },
+      running ? stopControls() : [
+        nc.length ? btn(`Run remaining (${nc.length})`, { size: 'sm', kind: 'primary', iconName: 'play', onClick: () => rerun(nc.map((x) => x.id).join(',')) }) : null,
+        btn('Run again', { size: 'sm', kind: 'secondary', iconName: 'refresh', onClick: () => rerun(null) })],
+      h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onClick: () => go('auto') }, icon('file', 14), h('span', { text: 'Full log' }))),
+    logConsole('all', 'rs-console'),
+    h('div', { class: 'mini-h', text: 'Latest screenshot' }),
+    liveShot());
+}
+
+function renderRight() {
+  const el = $('#copilot');
+  const tabs = [['check', 'Check', 'clipboard'], ['run', 'Run', 'zap'], ['copilot', 'Co-pilot', 'sparkles']];
+  const head = h('div', { class: 'rs-head', role: 'tablist', 'aria-label': 'Right sidebar' },
+    tabs.map(([id, label, ic]) => h('button', { type: 'button', role: 'tab', class: 'rs-tab', 'aria-selected': String(S.rpanel === id), onClick: () => { S.rpanel = id; store('rpanel', id); renderRight(); } },
+      id === 'run' && results().running ? icon('spin', 13) : icon(ic, 13), h('span', { text: label }))),
+    h('span', { class: 'rs-spacer' }),
+    h('button', { type: 'button', class: 'tab-act', 'aria-label': 'Hide the right sidebar', title: 'Hide the right sidebar', onClick: () => setRight(false) }, icon('panel', 15)));
+  let body;
+  if (S.rpanel === 'run') { TV.drawer = null; body = runPanel(); }
+  else if (S.rpanel === 'copilot') { TV.drawer = null; body = copilotPanel(); }
+  else { TV.drawer = h('div', { class: 'rs-check' }); body = TV.drawer; }
+  fill(el, head, h('div', { class: 'rs-body', role: 'tabpanel' }, body));
+  if (TV.drawer) updateDrawer();
+}
+
+/* ---- status bar */
+
+function renderStatusbar() {
+  const c = counts();
+  const r = results();
+  const running = !!r.running;
+  const cur = currentRun();
+  const pr = runProgress();
+  const nErr = TV.errors.length;
+  const p = plan();
+  fill($('#statusbar'),
+    h('button', { type: 'button', class: 'sb-item', title: p.title, onClick: () => go('overview') }, h('strong', { text: `PR #${p.pr}` })),
+    p.commit ? h('span', { class: 'sb-item', title: 'Commit being tested' }, h('code', { text: String(p.commit).slice(0, 7) })) : null,
+    env().dryRun ? h('span', { class: 'sb-badge', title: 'Nothing is posted to GitHub in a dry run', text: 'dry run' }) : null,
+    S.mode === 'mock' ? h('span', { class: 'sb-badge', title: S.fallback ? 'The QA server did not answer, so this is sample data.' : 'Sample data (?mock=1)', text: 'sample data' }) : null,
+    S.conn === 'lost' ? h('span', { class: 'sb-item sb-err' }, icon('alert', 12), 'Reconnecting\u2026') : null,
+    h('span', { class: 'sb-spacer' }),
+    running
+      ? h('button', { type: 'button', class: 'sb-item sb-run', title: 'Show the live run', onClick: () => showRightPanel('run') }, icon('spin', 12), h('span', { class: 'sb-run-label', text: cur ? cur.label : 'Running checks' }), cur ? elapsedEl(cur.started) : null, h('span', { text: `${pr.done}/${pr.total}` }))
+      : h('button', { type: 'button', class: 'sb-item', title: 'Show the run', onClick: () => showRightPanel('run') }, icon(r.stopped ? 'square' : 'check', 12), r.stopped ? `Stopped \u00b7 ${notChecked().length} not run` : 'Checks done'),
+    running ? h('button', { type: 'button', class: 'sb-item sb-stop', onClick: () => { RUN.stopConfirm = true; showRightPanel('run'); } }, icon('square', 11), 'Stop') : null,
+    h('span', { class: 'sb-sep', 'aria-hidden': 'true' }),
+    h('span', { class: 'sb-item', title: 'Passed', 'aria-label': `${c.passed} passed` }, icon('check', 12), String(c.passed)),
+    h('span', { class: 'sb-item', title: 'Failed', 'aria-label': `${c.failed} failed` }, icon('x', 12), String(c.failed)),
+    h('span', { class: 'sb-item', title: 'To do', 'aria-label': `${c.todo} to do` }, icon('circleDashed', 12), String(c.todo)),
+    h('button', { type: 'button', class: `sb-item ${nErr ? 'sb-err' : ''}`, title: 'Errors seen in the app under test', 'aria-label': `${plural(nErr, 'error')} seen in the app`, onClick: () => { go('test'); setTimeout(() => { TV.errorsOpen = true; updateRibbon(); }, 80); } }, icon('bug', 12), String(nErr)),
+    h('span', { class: 'sb-sep', 'aria-hidden': 'true' }),
+    h('span', { class: 'sb-item', title: 'Done', 'aria-label': `${c.pct} percent done` }, h('span', { class: 'sb-bar', 'aria-hidden': 'true' }, h('span', { class: 'sb-bar-fill', style: { width: `${c.pct}%` } })), `${c.pct}%`));
+}
+
+/* ---- command palette (Ctrl/Cmd+P) */
+
+const PAL = { items: [], idx: 0, q: '', input: null, list: null };
+
+function fuzzy(q, text) {
+  const t = String(text).toLowerCase();
+  let ti = 0; let score = 0; let last = -2;
+  for (const ch of q.toLowerCase()) {
+    if (ch === ' ') continue;
+    const i = t.indexOf(ch, ti);
+    if (i < 0) return 0;
+    score += i === last + 1 ? 3 : 1;
+    if (i === 0 || /[\s:\/\u00b7-]/.test(t[i - 1])) score += 2;
+    last = i; ti = i + 1;
+  }
+  return score - t.length * 0.01;
+}
+
+function paletteCommands() {
+  const cmds = [];
+  const add = (title, run, { hint = '', iconName = 'arrowRight', top = false } = {}) => cmds.push({ title, run, hint, iconName, top });
+  const running = !!results().running;
+  for (const [id, m] of Object.entries(VIEW_META)) {
+    if (id === 'sent' && !state().sent) continue;
+    if (id === 'complete' && state().sent) continue;
+    add(`Open ${m.label}`, () => go(id), { hint: 'Go to', iconName: m.icon, top: true });
+  }
+  if (running) add('Stop the automatic checks', () => { RUN.stopConfirm = true; showRightPanel('run'); }, { hint: 'Run', iconName: 'square', top: true });
+  else {
+    add('Run all automatic checks again', () => rerun(null), { hint: 'Run', iconName: 'refresh', top: true });
+    const nc = notChecked();
+    if (nc.length) add(`Run the remaining checks (${nc.length})`, () => rerun(nc.map((x) => x.id).join(',')), { hint: 'Run', iconName: 'play', top: true });
+  }
+  add('Take a screenshot of the Test view', () => { go('test'); setTimeout(() => tvScreenshot(false), 300); }, { hint: 'Test view', iconName: 'camera', top: true });
+  add('Attach a screenshot to the current check', () => { go('test'); setTimeout(() => tvScreenshot(true), 300); }, { hint: 'Test view', iconName: 'clip' });
+  add('Complete testing', () => go(state().sent ? 'sent' : 'complete'), { hint: 'Report', iconName: 'send', top: true });
+  for (const r of ROLES) add(`Sign in as ${cap(r)}`, () => { TV.role = r; if (tvShown()) tvNavigate({ role: r }); go('test'); }, { hint: 'Role', iconName: 'user' });
+  for (const d of TV_DEVICES) add(`Device: ${d.label}${d.size ? ` (${d.size}px)` : ''}`, () => { go('test'); setTimeout(() => setDevice(d.id), 60); }, { hint: 'Device', iconName: d.id === 'fit' ? 'maximize' : d.id });
+  for (const pg of plan().pages || []) add(`Open page ${pg.page}`, () => openPageInView(pg.page, (pg.roles || [])[0]), { hint: (pg.roles || []).map(cap).join(', '), iconName: 'file' });
+  for (const x of results().checks || []) add(`Check: ${x.name}`, () => go(`check:${x.id}`), { hint: (STATUS[checkStatus(x)] || STATUS.pending).label, iconName: (STATUS[checkStatus(x)] || STATUS.pending).icon });
+  for (const m of plan().manual || []) add(`Your check: ${m.title}`, () => go(`item:${m.id}`), { hint: state().manual?.[m.id]?.answer ? ANSWERS.find((a) => a.id === state().manual[m.id].answer).label : 'Not answered', iconName: 'clipboard' });
+  add(leftOpen() ? 'Hide the item list' : 'Show the item list', toggleLeft, { hint: 'Layout', iconName: 'panelLeft' });
+  add(rightOpen() ? 'Hide the right sidebar' : 'Show the right sidebar', toggleCopilot, { hint: 'Layout', iconName: 'panel' });
+  if (!isMobile()) add(S.panes.length > 1 ? 'Close the split view' : 'Split right', splitRight, { hint: 'Layout', iconName: 'columns' });
+  add('Close the current tab', () => closeTab(S.focus, focusedPane().active), { hint: 'Layout', iconName: 'x' });
+  add('Show setup health', () => { S.healthOpen = true; S.helpOpen = false; renderPopovers(); }, { hint: 'Help', iconName: 'info' });
+  return cmds;
+}
+
+function openPalette() {
+  const dlg = $('#palette');
+  if (dlg.open) { dlg.close(); return; }
+  PAL.q = ''; PAL.idx = 0;
+  PAL.input = h('input', { class: 'pal-input', type: 'text', name: 'palette', placeholder: 'Type a command, a check or a page\u2026', 'aria-label': 'Command', autocomplete: 'off', spellcheck: 'false', role: 'combobox', 'aria-controls': 'pal-list', 'aria-expanded': 'true', 'aria-autocomplete': 'list',
+    onInput: (e) => { PAL.q = e.target.value; PAL.idx = 0; renderPalList(); },
+    onKeydown: (e) => {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); if (!PAL.items.length) return; PAL.idx = (PAL.idx + (e.key === 'ArrowDown' ? 1 : -1) + PAL.items.length) % PAL.items.length; markPal(); }
+      else if (e.key === 'Enter') { e.preventDefault(); runPal(PAL.idx); }
+    } });
+  PAL.list = h('ul', { class: 'pal-list', id: 'pal-list', role: 'listbox', 'aria-label': 'Commands' });
+  fill(dlg, h('div', { class: 'pal-box' },
+    h('div', { class: 'pal-head' }, icon('search', 16), PAL.input, h('kbd', { text: 'Esc' })),
+    PAL.list,
+    h('div', { class: 'pal-foot' }, h('span', null, h('kbd', { text: '\u2191' }), h('kbd', { text: '\u2193' }), ' move'), h('span', null, h('kbd', { text: 'Enter' }), ' run'), h('span', null, h('kbd', { text: 'Esc' }), ' close'))));
+  renderPalList();
+  dlg.showModal();
+  PAL.input.focus();
+}
+
+function renderPalList() {
+  const q = PAL.q.trim();
+  const all = paletteCommands();
+  PAL.items = (q ? all.map((c) => ({ c, s: fuzzy(q, `${c.title} ${c.hint}`) })).filter((x) => x.s > 0).sort((a, b) => b.s - a.s).map((x) => x.c) : all.filter((c) => c.top)).slice(0, 60);
+  fill(PAL.list, PAL.items.length ? PAL.items.map((c, i) => h('li', { class: 'pal-item', role: 'option', id: `pal-${i}`, 'aria-selected': String(i === PAL.idx), onClick: () => runPal(i), onMousemove: () => { if (PAL.idx !== i) { PAL.idx = i; markPal(false); } } },
+    icon(c.iconName, 15), h('span', { class: 'pal-title', text: c.title }), c.hint ? h('span', { class: 'pal-hint', text: c.hint }) : null))
+    : h('li', { class: 'pal-empty', text: 'No command matches. Try a check name, a page or \u201crun\u201d.' }));
+  PAL.input.setAttribute('aria-activedescendant', PAL.items.length ? `pal-${PAL.idx}` : '');
+}
+function markPal(scroll = true) {
+  PAL.list.querySelectorAll('.pal-item').forEach((el, i) => el.setAttribute('aria-selected', String(i === PAL.idx)));
+  PAL.input.setAttribute('aria-activedescendant', `pal-${PAL.idx}`);
+  if (scroll) document.getElementById(`pal-${PAL.idx}`)?.scrollIntoView({ block: 'nearest' });
+}
+function runPal(i) {
+  const c = PAL.items[i];
+  if (!c) return;
+  $('#palette').close();
+  c.run();
+}
+
+/* ---- workspace: panes with tabs */
+
+const PANE_EL = [];
+function paneBody(i) { return PANE_EL[i]?.body || null; }
+
+function openTab(key) {
+  let pi = S.panes.findIndex((p) => p.tabs.includes(key));
+  if (pi < 0) {
+    pi = Math.min(S.focus, S.panes.length - 1);
+    const p = S.panes[pi];
+    p.tabs.splice(p.tabs.indexOf(p.active) + 1, 0, key);
+  }
+  S.panes[pi].active = key;
+  S.focus = pi;
+  S.view = viewOf(key);
+  saveWs();
+}
+
+function closeTab(pi, key) {
+  const p = S.panes[pi];
+  if (!p) return;
+  const i = p.tabs.indexOf(key);
+  if (i < 0) return;
+  p.tabs.splice(i, 1);
+  if (!p.tabs.length) {
+    if (S.panes.length > 1) { S.panes.splice(pi, 1); S.focus = 0; }
+    else { p.tabs = ['overview']; p.active = 'overview'; }
+  } else if (p.active === key) p.active = p.tabs[Math.min(i, p.tabs.length - 1)];
+  saveWs();
+  go(focusedPane().active);
+}
+
+function splitRight() {
+  if (S.panes.length > 1) { closeSplit(); return; }
+  const cur = focusedPane().active;
+  const m = currentManual();
+  const other = cur === 'test' ? (TV.autoCheck ? `check:${TV.autoCheck}` : m ? `item:${m.id}` : 'auto') : 'test';
+  const p0 = S.panes[0];
+  if (p0.tabs.includes(other)) {
+    if (p0.tabs.length === 1) return;
+    p0.tabs = p0.tabs.filter((k) => k !== other);
+    if (p0.active === other) p0.active = p0.tabs[0];
+  }
+  S.panes.push({ tabs: [other], active: other });
+  saveWs();
+  render();
+}
+
+function closeSplit() {
+  if (S.panes.length < 2) return;
+  const [a, b] = S.panes;
+  for (const k of b.tabs) if (!a.tabs.includes(k)) a.tabs.push(k);
+  if (S.focus === 1) a.active = b.active;
+  S.panes = [a];
+  S.focus = 0;
+  saveWs();
+  go(a.active);
+}
+
+function moveTab(fromPi, key, toPi, beforeKey) {
+  const src = S.panes[fromPi];
+  const dst = S.panes[toPi];
+  if (!src || !dst) return;
+  src.tabs = src.tabs.filter((k) => k !== key);
+  dst.tabs = dst.tabs.filter((k) => k !== key);
+  const at = beforeKey ? dst.tabs.indexOf(beforeKey) : -1;
+  if (at < 0) dst.tabs.push(key); else dst.tabs.splice(at, 0, key);
+  dst.active = key;
+  if (src !== dst) {
+    if (!src.tabs.length) S.panes.splice(S.panes.indexOf(src), 1);
+    else if (src.active === key) src.active = src.tabs[0];
+  }
+  S.focus = S.panes.indexOf(dst);
+  saveWs();
+  go(key);
+}
+
+function focusPane(i) {
+  if (i < 0 || S.focus === i || !S.panes[i]) return;
+  S.focus = i;
+  S.view = viewOf(S.panes[i].active);
+  history.replaceState(null, '', hashOf(S.panes[i].active));
+  saveWs();
+  renderShell();
+  PANE_EL.forEach((el, j) => el.root.classList.toggle('is-focused', j === S.focus));
+}
+
+function crumbFor(key) {
+  const v = viewOf(key);
+  const a = argOf(key);
+  const part = (label, k) => h('button', { type: 'button', onClick: () => go(k) }, label);
+  const sep = () => icon('chevRight', 11);
+  const parts = [part(`PR #${plan().pr}`, 'overview')];
+  if (v === 'check') { const x = checkById(a); parts.push(sep(), part('Automatic checks', 'auto'), sep(), h('span', { text: x?.group || '' }), sep(), h('span', { class: 'crumb-cur', text: keyLabel(key) })); }
+  else if (v === 'item') { const m = manualById(a); parts.push(sep(), part('Your checks', 'manual'), sep(), h('span', { text: m?.page || '' }), sep(), h('span', { class: 'crumb-cur', text: keyLabel(key) })); }
+  else parts.push(sep(), h('span', { class: 'crumb-cur', text: keyLabel(key) }));
+  return h('nav', { class: 'crumb', 'aria-label': 'Breadcrumb' }, parts);
+}
+
+function viewFor(key) {
+  const v = viewOf(key);
+  if (v === 'check') return viewCheck(argOf(key));
+  if (v === 'item') return viewItem(argOf(key));
+  return (VIEW_FN[v] || viewOverview)();
+}
+
+function renderTabbar(i) {
+  const p = S.panes[i];
+  const el = PANE_EL[i];
+  const last = i === S.panes.length - 1;
+  fill(el.tabbar,
+    p.tabs.map((k) => h('div', {
+      class: `tab ${k === p.active ? 'is-active' : ''}`, draggable: 'true', 'data-key': k,
+      onDragstart: (e) => { S.drag = { pi: i, key: k }; e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', k); } catch { /* ignore */ } },
+      onDragover: (e) => { if (S.drag) { e.preventDefault(); e.currentTarget.classList.add('is-drop'); } },
+      onDragleave: (e) => e.currentTarget.classList.remove('is-drop'),
+      onDrop: (e) => { e.preventDefault(); e.stopPropagation(); e.currentTarget.classList.remove('is-drop'); const d = S.drag; S.drag = null; if (d && d.key !== k) moveTab(d.pi, d.key, i, k); },
+      onAuxclick: (e) => { if (e.button === 1) { e.preventDefault(); closeTab(i, k); } },
+    },
+    h('button', { type: 'button', class: 'tab-main', role: 'tab', 'aria-selected': String(k === p.active), title: keyLabel(k), onClick: () => { S.focus = i; go(k); } }, keyGlyph(k), h('span', { class: 'tab-label', text: keyLabel(k) })),
+    h('button', { type: 'button', class: 'tab-close', 'aria-label': `Close ${keyLabel(k)}`, title: 'Close', onClick: (e) => { e.stopPropagation(); closeTab(i, k); } }, icon('x', 12)))),
+    h('span', { class: 'tab-spacer' }),
+    last && !isMobile() ? h('button', { type: 'button', class: 'tab-act js-split', 'aria-label': S.panes.length > 1 ? 'Close the split view' : 'Split right', title: S.panes.length > 1 ? 'Close the split view' : 'Split right', onClick: splitRight }, icon(S.panes.length > 1 ? 'x' : 'columns', 15)) : null,
+    last && !rightOpen() ? h('button', { type: 'button', class: 'tab-act', 'aria-label': 'Show the right sidebar', title: 'Show the right sidebar', onClick: () => setRight(true) }, icon('panel', 15)) : null);
+}
+
+function renderWorkspace() {
+  const ws = $('#main');
+  while (PANE_EL.length < S.panes.length) {
+    const tabbar = h('div', { class: 'tabbar', role: 'tablist', 'aria-label': PANE_EL.length ? 'Open tabs (right pane)' : 'Open tabs' });
+    const body = h('div', { class: 'pane-body', tabindex: '-1' });
+    const root = h('section', { class: 'pane', 'aria-label': PANE_EL.length ? 'Right pane' : 'Main pane' }, tabbar, body);
+    const idx = () => PANE_EL.findIndex((x) => x.root === root);
+    tabbar.addEventListener('dragover', (e) => { if (S.drag) e.preventDefault(); });
+    tabbar.addEventListener('drop', (e) => { e.preventDefault(); const d = S.drag; S.drag = null; if (d) moveTab(d.pi, d.key, idx(), null); });
+    root.addEventListener('pointerdown', () => focusPane(idx()));
+    root.addEventListener('focusin', () => focusPane(idx()));
+    PANE_EL.push({ root, tabbar, body });
+  }
+  const roots = PANE_EL.slice(0, S.panes.length).map((x) => x.root);
+  for (const child of [...ws.children]) if (!roots.includes(child)) child.remove();
+  roots.forEach((r, i) => { if (ws.children[i] !== r) ws.insertBefore(r, ws.children[i] || null); });
+  ws.dataset.panes = String(S.panes.length);
+  const ed = editingEl();
+  S.panes.forEach((p, i) => {
+    const el = PANE_EL[i];
+    el.root.classList.toggle('is-focused', i === S.focus);
+    renderTabbar(i);
+    if (ed && el.body.contains(ed)) { S.pendingRender = true; return; }
+    if (p.active === 'test') {
+      if (!TV.root || TV.root.parentNode !== el.body) fill(el.body, buildTestRoot());
+      updateTestView();
+      return;
+    }
+    const y = el.lastKey === p.active ? el.body.scrollTop : 0;
+    el.lastKey = p.active;
+    const focusedId = document.activeElement && el.body.contains(document.activeElement) ? document.activeElement.id : null;
+    fill(el.body, crumbFor(p.active), viewFor(p.active));
+    el.body.scrollTop = y;
+    if (focusedId) document.getElementById(focusedId)?.focus({ preventScroll: true });
+  });
 }
 
 /* ------------------------------------------------------------------ views */
@@ -1037,7 +1510,7 @@ function viewOverview() {
       h('section', { class: 'card' },
         h('div', { class: 'card-head' }, h('h2', { text: `Open ${proj().appName} as` })),
         h('p', { class: 'muted small', text: `Each button opens ${proj().appName} right here in the Test view, already signed in as that person.` }),
-        h('div', { class: 'role-grid' }, ROLES.map((r) => h('button', { type: 'button', class: 'role-btn', onClick: () => { TV.role = r; TV.page = roleHome(r); if (TV.frame && S.view === 'test') tvNavigate({ role: r, page: TV.page }); location.hash = '#test'; } }, h('span', { class: `avatar ${avClass(r)}`, 'aria-hidden': 'true', text: r[0].toUpperCase() }), h('span', { class: 'role-name', text: cap(r) }), icon('monitor', 14)))))),
+        h('div', { class: 'role-grid' }, ROLES.map((r) => h('button', { type: 'button', class: 'role-btn', onClick: () => openPageInView(roleHome(r), r) }, h('span', { class: `avatar ${avClass(r)}`, 'aria-hidden': 'true', text: r[0].toUpperCase() }), h('span', { class: 'role-name', text: cap(r) }), icon('monitor', 14)))))),
     h('section', { class: 'card' },
       h('div', { class: 'card-head' }, h('h2', { text: 'Links' })),
       h('div', { class: 'link-grid' }, links.map((l) => h('a', { class: 'link-card', href: l.href, target: '_blank', rel: 'noopener noreferrer' }, h('span', { class: 'link-icon' }, icon(l.iconName, 16)), h('span', { class: 'link-text' }, h('strong', { text: l.label }), h('span', { class: 'muted small', text: l.sub || '' })), icon('external', 14))))),
@@ -1220,7 +1693,7 @@ function livePanel() {
 
 /* ---- the Test view strip while running */
 function updateStrip() {
-  if (!TV.strip || S.view !== 'test') return;
+  if (!TV.strip || !tvShown()) return;
   const running = !!results().running;
   TV.strip.hidden = !running && !RUN.stopping;
   if (TV.strip.hidden) { fill(TV.strip, ); return; }
@@ -1291,10 +1764,10 @@ function openAutoInView(x) {
   const t = checkTarget(x);
   if (t.kind !== 'page') return;
   TV.autoCheck = x.id;
-  TV.drawerOpen = true;
+  S.rpanel = 'check';
   TV.rotated = false;
   if (t.device !== TV.device) { TV.device = t.device; logEvent({ type: 'device', device: t.device }); }
-  if (S.view !== 'test') { TV.page = t.page; TV.role = t.role; location.hash = '#test'; }
+  if (!tvShown()) { TV.page = t.page; TV.role = t.role; go('test'); if (!rightOpen()) setRight(true); }
   else { layoutFrame(); tvNavigate({ page: t.page, role: t.role }); updateTestView(); }
 }
 
@@ -1379,28 +1852,28 @@ function viewAuto() {
     }));
 }
 
-function checkRow(x, running) {
+function checkRow(x, running, opts = {}) {
   const st = checkStatus(x);
   const ov = x.override;
   const nLog = RUN.log.filter((l) => l.id === x.id).length;
-  const open = RUN.expanded.has(x.id);
-  const mine = RUN.mine === x.id;
+  const open = !!opts.detail || RUN.expanded.has(x.id);
+  const mine = !!opts.detail || RUN.mine === x.id;
   const autoSt = x.auto_status || null;
-  return h('li', { class: `check st-${st} ${ov ? 'is-mine' : ''}`, id: `chk-${x.id}` },
+  return h('li', { class: `check st-${st} ${ov ? 'is-mine' : ''}`, id: opts.detail ? null : `chk-${x.id}` },
     h('div', { class: 'check-main' },
       h('div', { class: 'check-top' },
         ov ? h('span', { class: `badge badge-${ov.status === 'pass' ? 'green' : 'red'} badge-mine` }, icon('user', 13), `Checked by you: ${ov.status === 'pass' ? 'Passed' : 'Failed'}`) : badge(st),
         ov && autoSt ? h('s', { class: 'auto-struck', title: 'Automatic result' }, `Auto: ${(STATUS[autoSt] || STATUS.pending).label}`) : null,
-        h('span', { class: 'check-name', text: x.name }),
+        opts.detail ? h('span', { class: 'check-name', text: x.name }) : h('a', { class: 'check-name', href: hashOf(`check:${x.id}`), title: 'Open this check in a tab', text: x.name }),
         x.blocker && x.status === 'fail' ? chip('Blocker', 'chip-red-solid') : null),
       ov?.note ? h('p', { class: 'check-note' }, h('strong', { text: 'Your note: ' }), ov.note) : null,
       x.detail ? h('p', { class: `check-detail ${ov ? 'is-struck' : ''}`, text: x.detail }) : st === 'running' ? h('p', { class: 'check-detail muted', text: 'Checking now\u2026' }) : st === 'pending' ? h('p', { class: 'check-detail muted', text: 'Waiting for its turn.' }) : st === 'notrun' ? h('p', { class: 'check-detail muted', text: 'Did not run. Run it, or check it yourself.' }) : null,
       h('div', { class: 'check-meta' }, chip(AREA_NAME[x.area] || x.area || 'general', 'chip-soft'), x.ms ? h('span', { class: 'muted small', text: `${(x.ms / 1000).toFixed(1)} s` }) : null, h('code', { class: 'muted small check-id', text: x.id })),
       x.shots?.length ? h('div', { class: 'thumbs' }, x.shots.slice(0, 4).map((f) => thumb(f, x.shots, 'thumb-sm'))) : null),
     h('div', { class: 'check-actions' },
-      h('button', { type: 'button', class: `btn btn-ghost btn-sm ${open ? 'is-on' : ''}`, 'aria-expanded': String(open), onClick: () => { if (open) RUN.expanded.delete(x.id); else RUN.expanded.add(x.id); renderMain(); } },
+      opts.detail ? null : h('button', { type: 'button', class: `btn btn-ghost btn-sm ${open ? 'is-on' : ''}`, 'aria-expanded': String(open), onClick: () => { if (open) RUN.expanded.delete(x.id); else RUN.expanded.add(x.id); renderMain(); } },
         icon('file', 14), h('span', { text: 'Log' }), h('span', { class: 'nav-badge nb-grey js-check-log-n', 'data-id': x.id, text: nLog })),
-      h('button', { type: 'button', class: `btn btn-sm ${mine ? 'btn-primary' : 'btn-secondary'}`, 'aria-expanded': String(mine), onClick: () => { RUN.mine = mine ? null : x.id; renderMain(); if (!mine) setTimeout(() => document.getElementById(`ovn-${x.id}`)?.scrollIntoView({ block: 'nearest', behavior: reducedMotion() ? 'auto' : 'smooth' }), 30); } },
+      opts.detail ? null : h('button', { type: 'button', class: `btn btn-sm ${mine ? 'btn-primary' : 'btn-secondary'}`, 'aria-expanded': String(mine), onClick: () => { RUN.mine = mine ? null : x.id; renderMain(); if (!mine) setTimeout(() => document.getElementById(`ovn-${x.id}`)?.scrollIntoView({ block: 'nearest', behavior: reducedMotion() ? 'auto' : 'smooth' }), 30); } },
         icon('user', 14), h('span', { text: 'Check it myself' })),
       btn('Re-run', { size: 'sm', kind: 'ghost', iconName: 'refresh', disabled: running, onClick: () => rerun(x.id), attrs: { 'aria-label': `Re-run ${x.name}` } })),
     open || mine ? h('div', { class: 'check-expand' }, open ? logConsole(x.id, 'check-log') : null, mine ? minePanel(x) : null) : null);
@@ -1443,7 +1916,7 @@ function viewManual() {
   );
 }
 
-function manualCard(m, num) {
+function manualCard(m, num, ctx = '') {
   const saved = state().manual?.[m.id] || {};
   const answer = saved.answer || null;
   const note = S.noteDrafts[m.id] ?? saved.note ?? '';
@@ -1452,13 +1925,13 @@ function manualCard(m, num) {
   // A matching co-pilot tip (phone tips are already covered by the phone-size hint).
   const words = String(m.title).toLowerCase().split(/\W+/).filter((w) => w.length > 4);
   const tip = m.needs === 'phone' ? null : (plan().copilot?.tips || []).find((t) => (m.area === 'roles' && /role/i.test(t)) || words.some((w) => t.toLowerCase().includes(w)));
-  const fileInput = h('input', { type: 'file', accept: 'image/png,image/jpeg', class: 'sr-only', id: `file-${m.id}`, onChange: (e) => { const f = e.target.files?.[0]; if (f) uploadManualShot(m.id, f); e.target.value = ''; } });
-  return h('article', { class: `card manual ${answer ? 'ans-' + answer : ''}`, id: `m-${m.id}`, 'data-manual-id': m.id, onFocusin: () => { S.lastCard = m.id; } },
+  const fileInput = h('input', { type: 'file', accept: 'image/png,image/jpeg', class: 'sr-only', id: `${ctx}file-${m.id}`, onChange: (e) => { const f = e.target.files?.[0]; if (f) uploadManualShot(m.id, f); e.target.value = ''; } });
+  return h('article', { class: `card manual ${answer ? 'ans-' + answer : ''}`, id: `${ctx}m-${m.id}`, 'data-manual-id': m.id, onFocusin: () => { S.lastCard = m.id; } },
     h('div', { class: 'manual-top' },
       h('div', { class: 'row gap-s wrap' }, h('span', { class: 'manual-num', text: `#${num}` }), chip(AREA_NAME[m.area] || m.area, 'chip-soft'), m.lane ? chip(m.lane, 'chip-lane') : null,
         m.needs === 'phone' ? h('span', { class: 'chip chip-amber' }, icon('phone', 12), 'Phone size') : m.needs === 'laptop' ? h('span', { class: 'chip' }, icon('laptop', 12), 'Laptop size') : null),
       h('span', { class: `ans-pill ${answer ? 'ap-' + answer : ''}`, text: answer ? ANSWERS.find((a) => a.id === answer).label : 'Not answered' })),
-    h('h2', { class: 'manual-title', text: m.title }),
+    h('h2', { class: 'manual-title' }, S.view === 'item' ? m.title : h('a', { href: hashOf(`item:${m.id}`), class: 'check-name', text: m.title })),
     m.why ? h('p', { class: 'manual-why' }, h('strong', { text: 'Why it matters: ' }), m.why) : null,
     h('div', { class: 'manual-grid' },
       h('div', null,
@@ -1473,17 +1946,17 @@ function manualCard(m, num) {
         tip ? h('p', { class: 'hint hint-accent' }, icon('sparkles', 14), h('span', { text: tip })) : null),
       h('div', { class: 'good-box' }, h('h3', { class: 'mini-h' }, icon('check', 14), 'What good looks like'), h('p', { text: m.good || 'Works as described in the issue.' }))),
     h('div', { class: 'answer-block' },
-      h('div', { class: 'mini-h', id: `q-${m.id}`, text: 'Did it work?' }),
-      h('div', { class: 'answer-row', role: 'group', 'aria-labelledby': `q-${m.id}` }, ANSWERS.map((a) => h('button', {
+      h('div', { class: 'mini-h', id: `${ctx}q-${m.id}`, text: 'Did it work?' }),
+      h('div', { class: 'answer-row', role: 'group', 'aria-labelledby': `${ctx}q-${m.id}` }, ANSWERS.map((a) => h('button', {
         type: 'button', class: `answer-btn ab-${a.tone} ${answer === a.id ? 'is-on' : ''}`, 'aria-pressed': String(answer === a.id),
         onClick: () => setAnswer(m.id, answer === a.id ? null : a.id),
       }, icon(a.icon, 16), a.label))),
-      h('label', { class: 'field-label', for: `note-${m.id}` }, needsNote ? 'What happened? (please describe it for the developer)' : 'Notes (optional)'),
-      h('textarea', { id: `note-${m.id}`, class: `textarea ${needsNote && !note.trim() ? 'needs' : ''}`, rows: 3, placeholder: needsNote ? 'For example: the timer started again from 30:00 after I reloaded.' : 'Anything worth telling the developer.', value: note,
+      h('label', { class: 'field-label', for: `${ctx}note-${m.id}` }, needsNote ? 'What happened? (please describe it for the developer)' : 'Notes (optional)'),
+      h('textarea', { id: `${ctx}note-${m.id}`, class: `textarea ${needsNote && !note.trim() ? 'needs' : ''}`, rows: 3, placeholder: needsNote ? 'For example: the timer started again from 30:00 after I reloaded.' : 'Anything worth telling the developer.', value: note,
         onInput: (e) => { S.noteDrafts[m.id] = e.target.value; scheduleNoteSave(m.id); } }),
       h('div', { class: 'shot-row' },
         (saved.shots || []).map((f) => thumb(f, saved.shots, 'thumb-sm')),
-        h('label', { class: 'btn btn-secondary btn-sm', for: `file-${m.id}` }, icon('upload', 14), h('span', { text: 'Attach screenshot' })), fileInput,
+        h('label', { class: 'btn btn-secondary btn-sm', for: `${ctx}file-${m.id}` }, icon('upload', 14), h('span', { text: 'Attach screenshot' })), fileInput,
         h('div', { class: 'paste-zone', tabindex: 0, role: 'button', 'aria-label': 'Paste a screenshot: focus here and press Ctrl+V', onPaste: (e) => handlePaste(e, m.id) }, icon('paste', 14), h('span', { text: 'Click here, then Ctrl+V to paste' }))),
       h('div', { class: 'save-line small', 'aria-live': 'polite' }, sv === 'saving' ? h('span', { class: 'muted' }, icon('spin', 12), ' Saving…') : sv === 'error' ? h('span', { class: 'bad-text', text: 'Not saved. Check the QA server and try again.' }) : saved.at ? h('span', { class: 'ok-text' }, icon('check', 12), ` Saved ${timeAgo(saved.at)}`) : h('span', { class: 'muted', text: 'Your answer saves by itself.' }))),
   );
@@ -1774,7 +2247,7 @@ function viewScore() {
           h('textarea', { id: 'note-dev', class: 'textarea', rows: 3, placeholder: 'For example: Great work on the timer. The settings page needs another look.', value: S.noteToDev, onInput: (e) => { S.noteToDev = e.target.value; } })))),
     h('div', { class: 'big-action' },
       h('button', { type: 'button', class: `btn btn-xl ${fix ? 'btn-amber' : 'btn-green'}`, disabled: S.completing, onClick: doComplete },
-        S.completing ? icon('spin', 22) : icon('send', 22), h('span', { text: S.completing ? 'Writing the report…' : fix ? 'Send back to developer' : 'Send for final review' })),
+        S.completing ? icon('spin', 22) : icon(fix ? 'arrowLeft' : 'check', 22), h('span', { text: S.completing ? 'Writing the report…' : fix ? 'Send back to developer' : 'Send for final review' })),
       h('p', { class: 'muted small', text: S.completing ? 'Claude is drafting the report. This can take up to a minute and a half.' : 'You will see the report and can edit it before anything is posted.' })),
   );
 }
@@ -1818,7 +2291,7 @@ function viewPreview() {
       h('textarea', { id: 'chat-draft', class: 'textarea mono', rows: 6, value: d.chat_md || '', onInput: (e) => { d.chat_md = e.target.value; } })),
     h('div', { class: 'big-action' },
       h('button', { type: 'button', id: 'confirm-send', class: `btn btn-xl ${fix ? 'btn-amber' : 'btn-green'}`, disabled: S.sending || !allOk, onClick: doSend },
-        S.sending ? icon('spin', 22) : icon('send', 22), h('span', { text: S.sending ? 'Posting to GitHub…' : 'Confirm and post' })),
+        S.sending ? icon('spin', 22) : icon(fix ? 'arrowLeft' : 'check', 22), h('span', { text: S.sending ? 'Posting to GitHub…' : fix ? 'Confirm: send back to developer' : 'Confirm: send for final review' })),
       h('p', { class: 'muted small', text: `Posts ${plural((d.comments || []).length, 'comment')} on GitHub with your account (gh pr comment). This cannot be undone from here.` })),
   );
 }
@@ -1831,7 +2304,7 @@ async function doSend() {
     if (r.chat_md) S.chatText = r.chat_md;
     if (!state().sent) state().sent = { at: new Date().toISOString(), decision: (S.draft.summary || summary()).decision, comments: r.urls || [], files: r.files || [] };
     S.sending = false;
-    location.hash = '#sent';
+    go('sent');
     toast('Report posted on GitHub', 'success');
   } catch (e) {
     S.sending = false;
@@ -1896,7 +2369,7 @@ function makeChatBlob() { S.chatBlob = URL.createObjectURL(new Blob([S.chatText 
 async function loadNext() {
   S.next = null;
   try { S.next = ((await api('GET', '/api/next')).prs || []).filter((n) => Number(n.number) !== Number(plan().pr)); } catch { S.next = []; }
-  if (S.data) renderTopbar();
+  if (S.data) renderPopovers();
   if (S.view === 'sent') renderMain();
 }
 function makeMockSheet() {
@@ -1910,7 +2383,7 @@ function makeMockSheet() {
   list.forEach((f, i) => {
     const x = 40 + (i % 4) * 285, y = 90 + Math.floor(i / 4) * 300;
     g.fillStyle = '#fff'; g.fillRect(x, y, 265, 250); g.strokeStyle = '#e5e7eb'; g.strokeRect(x, y, 265, 250);
-    g.fillStyle = '#4f46e5'; g.fillRect(x, y, 265, 36);
+    g.fillStyle = '#111'; g.fillRect(x, y, 265, 36);
     g.fillStyle = '#374151'; g.font = '14px Inter, Arial'; g.fillText(String(f).replace('shots/', '').slice(0, 34), x + 10, y + 276);
   });
   cv.toBlob((b) => { if (b) { S.sheetBlob = URL.createObjectURL(b); if (S.view === 'sent') renderMain(); } }, 'image/png');
@@ -2207,7 +2680,8 @@ async function tvScreenshot(attach) {
 
 function applyControl(c) {
   if (!c || !c.action) return;
-  if (S.view !== 'test') location.hash = '#test';
+  const shown = tvShown();
+  if (!shown) go('test');
   setTimeout(() => {
     if (c.action === 'navigate') tvNavigate({ page: c.page ?? TV.page, role: c.role || undefined });
     else if (c.action === 'role' && c.role) tvNavigate({ role: c.role });
@@ -2215,7 +2689,7 @@ function applyControl(c) {
     else if (c.action === 'reload') tvReload();
     else if (c.action === 'shot') tvScreenshot(false);
     toast(`Claude: ${c.action}${c.page ? ' ' + c.page : ''}${c.role ? ' as ' + c.role : ''}${c.device ? ' on ' + c.device : ''}`);
-  }, S.view === 'test' ? 0 : 60);
+  }, shown ? 0 : 60);
 }
 
 /* ---- build + update */
@@ -2226,9 +2700,10 @@ function openCheckInView(m) {
   const want = m.needs === 'phone' ? 'phone' : m.needs === 'laptop' ? 'laptop' : TV.device;
   if (want !== TV.device) { TV.device = want; logEvent({ type: 'device', device: want }); }
   TV.rotated = false;
-  if (S.view !== 'test') {
+  S.rpanel = 'check';
+  if (!tvShown()) {
     TV.page = m.page || TV.page; TV.role = m.role || TV.role;
-    location.hash = '#test';
+    go('test');
   } else {
     layoutFrame();
     tvNavigate({ page: m.page || TV.page, role: m.role || TV.role });
@@ -2240,16 +2715,14 @@ function buildTestRoot() {
   const m = currentManual();
   if (!TV.role) TV.role = m?.role || plan().pages?.[0]?.roles?.[0] || ROLES[0];
   if (!TV.page) TV.page = m?.page || roleHome(TV.role);
-  if (TV.drawerOpen == null) TV.drawerOpen = window.innerWidth >= 1100;
   TV.ribbon = h('div', { class: 'ribbon', role: 'toolbar', 'aria-label': 'Test view tools' });
   TV.frame = h('iframe', { class: 'tv-frame', title: `${proj().appName} under test`, referrerpolicy: 'same-origin' });
   TV.frame.addEventListener('load', onFrameLoad);
   TV.wrap = h('div', { class: 'tv-device' }, TV.frame);
   TV.canvas = h('div', { class: 'tv-canvas' }, h('div', { class: 'tv-stage' }, TV.wrap, h('div', { class: 'tv-size muted small', 'aria-live': 'polite' })));
-  TV.drawer = h('aside', { class: 'tv-drawer', 'aria-label': 'Your checks' });
   TV.errPop = h('div', { class: 'tv-errors-pop' });
   TV.strip = h('div', { class: 'tv-strip', role: 'status', hidden: true });
-  TV.root = h('div', { class: 'tv' }, TV.ribbon, TV.strip, TV.errPop, h('div', { class: 'tv-body' }, TV.canvas, TV.drawer));
+  TV.root = h('div', { class: 'tv' }, TV.ribbon, TV.strip, TV.errPop, h('div', { class: 'tv-body' }, TV.canvas));
   TV.ro?.disconnect();
   TV.ro = new ResizeObserver(() => layoutFrame());
   TV.ro.observe(TV.canvas);
@@ -2262,12 +2735,11 @@ function updateTestView() {
   updateRibbon();
   updateStrip();
   updateDrawer();
-  TV.root.dataset.drawer = TV.drawerOpen ? 'open' : 'closed';
   requestAnimationFrame(layoutFrame);
 }
 
 function updateRibbon() {
-  if (!TV.ribbon || S.view !== 'test') return;
+  if (!TV.ribbon || !tvShown()) return;
   const c = counts();
   const pages = plan().pages || [];
   const m = currentManual();
@@ -2276,7 +2748,6 @@ function updateRibbon() {
     onKeydown: (e) => { if (e.key === 'Enter') { e.preventDefault(); const v = e.target.value.trim(); if (v) { tvNavigate({ page: v }); e.target.blur(); } } },
     onChange: (e) => { const v = e.target.value.trim(); if (v && v !== TV.page) tvNavigate({ page: v }); } });
   fill(TV.ribbon, 
-    h('a', { class: 'rb-brand', href: '#overview', 'aria-label': 'Anvil dashboard', title: 'Anvil dashboard' }, brandMark(22)),
     h('label', { class: 'rb-role' }, h('span', { class: 'sr-only', text: 'Signed in as' }), h('span', { class: `avatar ${avClass(TV.role)}`, 'aria-hidden': 'true', text: (TV.role || '?')[0].toUpperCase() }),
       h('select', { class: 'select rb-select', name: 'tv-role', onChange: (e) => tvNavigate({ role: e.target.value }) }, ROLES.map((r) => h('option', { value: r, text: cap(r), selected: TV.role === r })))),
     h('div', { class: 'rb-pagewrap' }, pageInput, h('datalist', { id: 'tv-pages' }, pages.map((p) => h('option', { value: p.page, label: (p.roles || []).map(cap).join(', ') })))),
@@ -2290,8 +2761,8 @@ function updateRibbon() {
     h('button', { type: 'button', class: 'btn btn-secondary btn-sm rb-shot', disabled: TV.shotBusy, title: 'Exact screenshot of what you see', onClick: () => tvScreenshot(false) }, TV.shotBusy ? icon('spin', 15) : icon('camera', 15), h('span', { class: 'rb-text', text: 'Screenshot' })),
     h('button', { type: 'button', class: 'btn btn-ghost btn-sm', disabled: TV.shotBusy || !m, title: m ? `Screenshot and attach it to “${m.title}”` : 'No check selected', 'aria-label': m ? `Attach a screenshot to ${m.title}` : 'Attach a screenshot', onClick: () => tvScreenshot(true) }, icon('clip', 15), h('span', { class: 'rb-text', text: 'Attach' })),
     h('button', { type: 'button', class: `btn btn-sm rb-errors ${nErr ? 'has-err' : ''}`, 'aria-expanded': String(TV.errorsOpen), 'aria-label': `${plural(nErr, 'error')} seen on this page. Show list`, onClick: () => { TV.errorsOpen = !TV.errorsOpen; updateRibbon(); } }, icon('bug', 15), h('span', { text: nErr })),
-    h('button', { type: 'button', class: `btn btn-sm rb-checks ${TV.drawerOpen ? 'is-on' : ''}`, 'aria-expanded': String(!!TV.drawerOpen), 'aria-label': 'Your checks panel', onClick: () => { TV.drawerOpen = !TV.drawerOpen; TV.root.dataset.drawer = TV.drawerOpen ? 'open' : 'closed'; updateRibbon(); requestAnimationFrame(layoutFrame); } }, icon('clipboard', 15), h('span', { text: `${c.manTotal - c.manOpen}/${c.manTotal}` })),
-    h('a', { class: 'btn btn-ghost btn-sm', href: '#overview', title: 'Back to the dashboard' }, icon('grid', 15), h('span', { class: 'rb-text', text: 'Dashboard' })),
+    h('button', { type: 'button', class: `btn btn-sm rb-checks ${rightOpen() && S.rpanel === 'check' ? 'is-on' : ''}`, 'aria-expanded': String(rightOpen() && S.rpanel === 'check'), 'aria-label': 'Show the current check in the right sidebar', title: 'Current check', onClick: () => { if (rightOpen() && S.rpanel === 'check') setRight(false); else showRightPanel('check'); } }, icon('clipboard', 15), h('span', { text: `${c.manTotal - c.manOpen}/${c.manTotal}` })),
+    h('button', { type: 'button', class: 'btn btn-ghost btn-sm rb-split', title: 'Split: the Test view and the current check side by side', 'aria-label': S.panes.length > 1 ? 'Close the split view' : 'Split right', onClick: splitRight }, icon('columns', 15), h('span', { class: 'rb-text', text: S.panes.length > 1 ? 'Unsplit' : 'Split' })),
   );
   // errors drawer
   TV.errPop.hidden = !TV.errorsOpen;
@@ -2310,7 +2781,7 @@ function autoDrawer(x) {
   const autoSt = x.auto_status || x.status;
   const ov = x.override;
   return h('div', { class: 'tv-drawer-in' },
-    h('div', { class: 'row between' }, h('span', { class: 'mini-h', text: 'Checking an automatic check' }), h('button', { type: 'button', class: 'icon-btn', 'aria-label': 'Close panel', onClick: () => { TV.drawerOpen = false; updateTestView(); } }, icon('x', 16))),
+    h('div', { class: 'row between' }, h('span', { class: 'mini-h', text: 'Checking an automatic check' }), h('button', { type: 'button', class: 'icon-btn', 'aria-label': 'Close panel', onClick: () => setRight(false) }, icon('x', 16))),
     h('h2', { class: 'tv-title', text: x.name }),
     h('div', { class: 'row gap-s wrap' }, ov ? h('span', { class: `badge badge-${ov.status === 'pass' ? 'green' : 'red'}` }, icon('user', 13), `Checked by you: ${ov.status === 'pass' ? 'Passed' : 'Failed'}`) : null,
       ov ? h('s', { class: 'auto-struck', text: `Auto: ${(STATUS[autoSt] || STATUS.pending).label}` }) : badge(autoSt)),
@@ -2323,7 +2794,7 @@ function autoDrawer(x) {
       btn('Your checks', { size: 'sm', kind: 'secondary', iconName: 'clipboard', onClick: () => { TV.autoCheck = null; updateDrawer(); } })));
 }
 function updateDrawer() {
-  if (!TV.drawer || S.view !== 'test') return;
+  if (!TV.drawer || !TV.drawer.isConnected) return;
   const ac = TV.autoCheck ? checkById(TV.autoCheck) : null;
   if (ac) { fill(TV.drawer, autoDrawer(ac)); return; }
   const list = plan().manual || [];
@@ -2341,7 +2812,7 @@ function updateDrawer() {
   const next = list.slice(idx + 1).find((x) => !state().manual?.[x.id]?.answer) || list[idx + 1] || null;
   const onPage = TV.page === m.page && TV.role === m.role;
   fill(TV.drawer, h('div', { class: 'tv-drawer-in', 'data-manual-id': m.id },
-    h('div', { class: 'row between' }, h('span', { class: 'mini-h', text: `Check ${idx + 1} of ${list.length}` }), h('button', { type: 'button', class: 'icon-btn', 'aria-label': 'Close panel', onClick: () => { TV.drawerOpen = false; updateTestView(); } }, icon('x', 16))),
+    h('div', { class: 'row between' }, h('span', { class: 'mini-h', text: `Check ${idx + 1} of ${list.length}` }), h('button', { type: 'button', class: 'icon-btn', 'aria-label': 'Close panel', onClick: () => setRight(false) }, icon('x', 16))),
     h('div', { class: 'tv-dots', role: 'list', 'aria-label': 'All checks' }, list.map((x, i) => {
       const a = state().manual?.[x.id]?.answer;
       return h('button', { type: 'button', role: 'listitem', class: `tv-dot ${a ? 'd-' + a : ''} ${x.id === m.id ? 'is-cur' : ''}`, 'aria-label': `Check ${i + 1}: ${x.title}${a ? ` (${a})` : ''}`, title: x.title, onClick: () => openCheckInView(x) }, String(i + 1));
@@ -2386,7 +2857,7 @@ function renderLightbox() {
     h('div', { class: 'lb-bar' },
       h('div', { class: 'lb-cap' }, h('strong', { text: s.page }), s.role ? h('span', { class: 'muted', text: ` · ${cap(s.role)} · ${cap(s.device)}` }) : null, many ? h('span', { class: 'muted', text: `  ${lb.idx + 1} / ${lb.list.length}` }) : null),
       h('div', { class: 'row gap-s' },
-        s.page && s.role ? h('button', { type: 'button', class: 'btn btn-ghost btn-sm lb-open', onClick: () => { dlg.close(); TV.role = s.role; TV.page = s.page; if (s.device in DEVICE_SIZE) TV.device = s.device; if (S.view === 'test') { layoutFrame(); tvNavigate({ role: s.role, page: s.page }); } else location.hash = '#test'; } }, h('span', { text: 'Open in Test view' }), icon('monitor', 14)) : null,
+        s.page && s.role ? h('button', { type: 'button', class: 'btn btn-ghost btn-sm lb-open', onClick: () => { dlg.close(); TV.role = s.role; TV.page = s.page; if (s.device in DEVICE_SIZE) TV.device = s.device; if (tvShown()) { layoutFrame(); tvNavigate({ role: s.role, page: s.page }); } go('test'); } }, h('span', { text: 'Open in Test view' }), icon('monitor', 14)) : null,
         h('button', { type: 'button', class: 'icon-btn lb-close', 'aria-label': 'Close', onClick: () => dlg.close() }, icon('x', 20)))),
     h('div', { class: 'lb-stage' },
       many ? h('button', { type: 'button', class: 'lb-nav lb-prev', 'aria-label': 'Previous screenshot', onClick: () => stepLightbox(-1) }, icon('chevLeft', 22)) : null,
@@ -2401,55 +2872,59 @@ function stepLightbox(d) {
   renderLightbox();
 }
 
+/* ------------------------------------------------------------------ single-item views (opened as tabs) */
+
+function viewCheck(id) {
+  const x = checkById(id);
+  if (!x) return h('div', { class: 'view view-narrow' }, empty('zap', 'Check not found', 'It is not part of this run any more.', h('button', { type: 'button', class: 'btn btn-secondary', onClick: () => go('auto') }, 'Open Automatic checks')));
+  const g = GROUPS.find((y) => y.name === x.group);
+  return h('div', { class: 'view view-narrow view-check' },
+    pageHead(x.name, g?.about || ''),
+    h('section', { class: 'card group' }, h('ul', { class: 'check-list' }, checkRow(x, !!results().running, { detail: true }))));
+}
+
+function viewItem(id) {
+  const m = manualById(id);
+  if (!m) return h('div', { class: 'view view-narrow' }, empty('clipboard', 'Check not found', 'It is not in this PR’s plan any more.', h('button', { type: 'button', class: 'btn btn-secondary', onClick: () => go('manual') }, 'Open Your checks')));
+  return h('div', { class: 'view view-narrow' }, manualCard(m, (plan().manual || []).indexOf(m) + 1, 'i-'));
+}
+
 /* ------------------------------------------------------------------ render */
 
 const VIEW_FN = { test: () => null, overview: viewOverview, auto: viewAuto, manual: viewManual, screens: viewScreens, tools: viewTools, complete: viewComplete, sent: viewSent };
 
-function renderShell() {
-  const app = $('#app');
-  app.dataset.copilot = S.copilotOpen ? 'open' : 'closed';
-  app.dataset.nav = S.navOpen ? 'open' : 'closed';
-  app.dataset.mode = S.view === 'test' ? 'test' : 'dash';
-  const overlay = matchMedia('(max-width: 1199px)').matches;
-  const scrim = $('#scrim');
-  scrim.hidden = !(S.navOpen || (overlay && S.copilotOpen));
-  renderTopbar();
-  renderNav();
-  renderCopilot();
-}
-
-function isEditing() {
+function editingEl() {
   const a = document.activeElement;
-  return a && $('#main').contains(a) && (a.tagName === 'TEXTAREA' || (a.tagName === 'INPUT' && a.type === 'text'));
+  if (!a || a === LSB.search || a === PAL.input) return null;
+  if (!$('#app').contains(a)) return null;
+  return a.tagName === 'TEXTAREA' || (a.tagName === 'INPUT' && /^(text|search)$/.test(a.type)) ? a : null;
+}
+function isEditing() { return !!editingEl(); }
+
+function renderShell() {
+  if (!S.data) return;
+  const app = $('#app');
+  app.dataset.copilot = rightOpen() ? 'open' : 'closed';
+  app.dataset.lsb = leftOpen() ? 'open' : 'closed';
+  app.style.setProperty('--lsb-w', `${S.lsbW}px`);
+  $('#scrim').hidden = !((isMobile() && (S.lsbOpenM || S.copilotOpenM)) || (!isMobile() && isNarrow() && S.copilotOpenM));
+  renderRibbonBar();
+  renderLeft();
+  const ed = editingEl();
+  if (ed && $('#copilot').contains(ed)) S.pendingRender = true; else renderRight();
+  renderStatusbar();
+  renderPopovers();
 }
 
-function renderMain() {
-  const main = $('#main');
-  const y = window.scrollY;
-  const mainY = main.scrollTop;
-  if (S.view === 'test') {
-    if (!TV.root || !main.contains(TV.root)) fill(main, buildTestRoot());
-    updateTestView();
-    S.pendingRender = false;
-    return;
-  }
-  const focusedId = document.activeElement && main.contains(document.activeElement) ? document.activeElement.id : null;
-  const fn = VIEW_FN[S.view] || viewOverview;
-  fill(main, fn());
-  window.scrollTo(0, y);
-  main.scrollTop = mainY;
-  if (focusedId) document.getElementById(focusedId)?.focus({ preventScroll: true });
-  S.pendingRender = false;
-}
+function renderMain() { if (S.data) renderWorkspace(); }
 
 function render() {
   if (!S.data) return;
   renderShell();
-  if (isEditing()) { S.pendingRender = true; return; }
-  renderMain();
+  renderWorkspace();
 }
 
-function scrollTop() { window.scrollTo({ top: 0, behavior: reducedMotion() ? 'auto' : 'smooth' }); $('#main').scrollTop = 0; }
+function scrollTop() { const b = paneBody(S.focus); if (b) b.scrollTo({ top: 0, behavior: reducedMotion() ? 'auto' : 'smooth' }); }
 
 /* ------------------------------------------------------------------ routing + events */
 
@@ -2461,27 +2936,34 @@ function route() {
   let sub = cut < 0 ? '' : raw.slice(cut + 1);
   try { sub = decodeURIComponent(sub); } catch { /* keep raw */ }
   if (view === 'auto' && sub) { RUN.mine = sub; RUN.expanded.add(sub); }
-  let v = VIEW_FN[view] ? view : 'overview';
-  if (!raw) v = state().sent ? 'sent' : 'test';
-  if (v === 'complete' && state().sent) v = 'sent';
-  const changed = v !== S.view;
-  S.view = v;
-  S.navOpen = false;
-  if (matchMedia('(max-width: 1199px)').matches && changed) S.copilotOpen = false;
-  if (changed && v !== 'test') { TV.errorsOpen = false; }
-  if (v === 'complete' && changed && S.completeStage === 'gate' && state().draft && !S.draft) { /* resume draft */ S.draft = structuredClone(state().draft); S.completeStage = 'preview'; }
-  renderShell();
-  renderMain();
-  if (changed && !reducedMotion()) $('#main > .view')?.classList.add('view-enter');
-  if (v === 'test') { if (changed) window.scrollTo(0, 0); }
-  if (sub) {
-    const el = document.getElementById(`m-${sub}`) || document.getElementById(`chk-${sub}`);
+  let key;
+  if (view === 'check' && sub) key = `check:${sub}`;
+  else if (view === 'item' && sub) key = `item:${sub}`;
+  else if (VIEW_META[view]) key = view;
+  else key = raw ? 'overview' : focusedPane()?.active || (state().sent ? 'sent' : 'test');
+  if (key === 'complete' && state().sent) key = 'sent';
+  if (key === 'sent' && !state().sent) key = 'complete';
+  if (!validKey(key)) key = 'overview';
+  if (key === 'sent') S.panes.forEach((p) => { const i = p.tabs.indexOf('complete'); if (i >= 0 && !p.tabs.includes('sent')) { p.tabs[i] = 'sent'; if (p.active === 'complete') p.active = 'sent'; } });
+  // the right sidebar follows the item opened in a tab
+  if (viewOf(key) === 'item') { TV.currentId = argOf(key); TV.autoCheck = null; }
+  else if (viewOf(key) === 'check') TV.autoCheck = argOf(key);
+  const before = focusedPane()?.active;
+  openTab(key);
+  const changed = before !== key;
+  if (isMobile()) { S.lsbOpenM = false; S.copilotOpenM = false; }
+  if (changed) TV.errorsOpen = false;
+  if (key === 'complete' && changed && S.completeStage === 'gate' && state().draft && !S.draft) { S.draft = structuredClone(state().draft); S.completeStage = 'preview'; }
+  render();
+  const body = paneBody(S.focus);
+  if (changed && !reducedMotion()) body?.querySelector(':scope > .view')?.classList.add('view-enter');
+  if (sub && (view === 'auto' || view === 'manual')) {
+    const el = (body || document).querySelector(`[id="${CSS.escape(`m-${sub}`)}"], [id="${CSS.escape(`chk-${sub}`)}"]`);
     if (el) { el.scrollIntoView({ behavior: reducedMotion() ? 'auto' : 'smooth', block: 'start' }); el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 1400); }
-  } else if (changed) {
-    window.scrollTo(0, 0);
-    $('#main').focus({ preventScroll: true });
+  } else if (changed && body) {
+    body.scrollTop = 0;
   }
-  document.title = `${(VIEWS.find((x) => x.id === v) || { label: 'Sent' }).label} · PR #${plan().pr} · Anvil`;
+  document.title = `${keyLabel(key)} · PR #${plan().pr} · Anvil`;
 }
 
 function applyProject() {
@@ -2494,6 +2976,12 @@ function onData(d) {
   if (!d || !d.plan) return;
   S.data = d;
   applyProject();
+  // drop tabs whose check or item is no longer in the run / plan
+  for (const p of S.panes) {
+    p.tabs = p.tabs.filter(validKey);
+    if (!p.tabs.length) p.tabs = ['overview'];
+    if (!p.tabs.includes(p.active)) p.active = p.tabs[0];
+  }
   render();
 }
 
@@ -2522,32 +3010,33 @@ function connectLive() {
 function bindGlobal() {
   window.addEventListener('hashchange', route);
   window.addEventListener('pagehide', flushOnExit);
-  $('#scrim').addEventListener('click', () => { S.navOpen = false; if (matchMedia('(max-width: 1199px)').matches) S.copilotOpen = false; renderShell(); });
+  $('#scrim').addEventListener('click', () => { S.lsbOpenM = false; S.copilotOpenM = false; render(); });
   document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && !e.altKey && (e.key === 'p' || e.key === 'P' || e.key === 'k' || e.key === 'K')) { e.preventDefault(); openPalette(); return; }
     if (e.key === 'Escape') {
-      if (S.healthOpen) { S.healthOpen = false; renderTopbar(); $('.health-btn')?.focus(); }
-      else if (S.switchOpen) { S.switchOpen = false; renderTopbar(); $('.switch-btn')?.focus(); }
+      if ($('#palette').open || $('#lightbox').open) return;
+      if (S.healthOpen || S.helpOpen) { S.healthOpen = false; S.helpOpen = false; renderPopovers(); }
       else if (TV.errorsOpen) { TV.errorsOpen = false; updateRibbon(); $('.rb-errors')?.focus(); }
-      else if (S.navOpen) { S.navOpen = false; renderShell(); }
-      else if (S.copilotOpen && matchMedia('(max-width: 1199px)').matches) { S.copilotOpen = false; renderShell(); }
+      else if (S.lsbOpenM || S.copilotOpenM) { S.lsbOpenM = false; S.copilotOpenM = false; render(); }
     }
     const dlg = $('#lightbox');
     if (dlg.open && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) { e.preventDefault(); stepLightbox(e.key === 'ArrowLeft' ? -1 : 1); }
   });
   document.addEventListener('click', (e) => {
-    if (S.healthOpen && !e.target.closest('.health')) { S.healthOpen = false; renderTopbar(); }
-    if (S.switchOpen && !e.target.closest('.switch-pr')) { S.switchOpen = false; renderTopbar(); }
-    if (TV.errorsOpen && !e.target.closest('.errors-panel, .rb-errors')) { TV.errorsOpen = false; updateRibbon(); }
+    if ((S.healthOpen || S.helpOpen) && !e.target.closest('.popover, .rb-item')) { S.healthOpen = false; S.helpOpen = false; renderPopovers(); }
+    if (TV.errorsOpen && !e.target.closest('.errors-panel, .rb-errors, .sb-item')) { TV.errorsOpen = false; updateRibbon(); }
   });
   document.addEventListener('paste', (e) => {
-    if (S.view !== 'manual' || e.defaultPrevented) return;
+    if (!['manual', 'item'].includes(S.view) || e.defaultPrevented) return;
     if (e.target.closest?.('.paste-zone')) return;
     const id = e.target.closest?.('[data-manual-id]')?.dataset.manualId || S.lastCard;
     if (id) handlePaste(e, id);
   });
-  $('#main').addEventListener('focusout', () => { setTimeout(() => { if (S.pendingRender && !isEditing()) renderMain(); }, 0); });
+  $('#app').addEventListener('focusout', () => { setTimeout(() => { if (S.pendingRender && !isEditing()) { S.pendingRender = false; render(); } }, 0); });
   $('#lightbox').addEventListener('click', (e) => { if (e.target.id === 'lightbox') e.target.close(); });
-  matchMedia('(max-width: 1199px)').addEventListener('change', () => renderShell());
+  $('#palette').addEventListener('click', (e) => { if (e.target.id === 'palette') e.target.close(); });
+  matchMedia('(max-width: 1199px)').addEventListener('change', () => render());
+  matchMedia('(max-width: 760px)').addEventListener('change', () => render());
 }
 
 function fatal(msg) {
@@ -2584,7 +3073,16 @@ async function boot() {
   S.data = data;
   applyProject();
   if (data.state?.draft && !data.state?.sent) S.draft = structuredClone(data.state.draft);
-  if (matchMedia('(max-width: 1199px)').matches) S.copilotOpen = false;
+  // restore this PR's workspace (tabs per pane)
+  const saved = store(`ws:${plan().pr}`);
+  if (saved && Array.isArray(saved.panes) && saved.panes.length) {
+    S.panes = saved.panes.slice(0, 2).map((p) => ({ tabs: (p.tabs || []).filter(validKey), active: p.active })).filter((p) => p.tabs.length);
+    for (const p of S.panes) if (!p.tabs.includes(p.active)) p.active = p.tabs[0];
+    S.focus = Math.min(saved.focus || 0, Math.max(0, S.panes.length - 1));
+  }
+  if (!S.panes.length) S.panes = [{ tabs: state().sent ? ['sent', 'overview'] : ['test', 'overview', 'auto'], active: state().sent ? 'sent' : 'test' }];
+  if (!location.hash) history.replaceState(null, '', hashOf(focusedPane().active));
+  fill($('#main'));
   route();
   loadNext();
   loadLog();
