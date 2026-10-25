@@ -8,25 +8,28 @@
   <meta name="color-scheme" content="light">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400..800&display=swap">
   <link rel="stylesheet" href="app.css">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23111' d='M8 4.5H22.5V9H19L16.5 13.5H19L21.5 19.5H6.5L9 13.5H12L10.5 9C7 9 3.8 7.8 1 5.6C3.3 4.9 5.6 4.5 8 4.5Z'/%3E%3C/svg%3E">
   <script type="module" src="app.js"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to main content</a>
-  <div class="app" id="app" data-copilot="open">
-    <header class="topbar" id="topbar"></header>
-    <nav class="sidenav" id="sidenav" aria-label="Sections"></nav>
-    <div class="scrim" id="scrim" hidden></div>
-    <main class="main" id="main" tabindex="-1">
+  <div class="app" id="app" data-copilot="open" data-lsb="open">
+    <nav class="ribbonbar" id="ribbonbar" aria-label="Anvil"></nav>
+    <aside class="lsb" id="lsb" aria-label="Pull request items"></aside>
+    <main class="workspace" id="main" tabindex="-1">
       <div class="boot" role="status">
         <div class="spinner" aria-hidden="true"></div>
         <p>Starting Anvil&hellip;</p>
       </div>
     </main>
-    <aside class="copilot" id="copilot" aria-label="Co-pilot"></aside>
+    <aside class="copilot" id="copilot" aria-label="Right sidebar"></aside>
+    <footer class="statusbar" id="statusbar" aria-label="Status"></footer>
+    <div class="scrim" id="scrim" hidden></div>
   </div>
+  <div class="popovers" id="popovers"></div>
+  <dialog class="palette" id="palette" aria-label="Command palette"></dialog>
   <dialog class="lightbox" id="lightbox" aria-label="Screenshot viewer"></dialog>
   <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
 </body>
