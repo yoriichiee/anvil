@@ -86,6 +86,8 @@ and Claude Code.
    **start anvil 42** for a specific PR. Claude lists the open PRs assigned to you with the testing label, prepares
    everything and opens Anvil. Say **stop anvil** when you are done.
 
+**New tester? Read the [Tester Guide](docs/TESTER-GUIDE.md)** - every screen, button and step, in plain words.
+
 ## Quick start for project maintainers
 
 1. Copy [`examples/anvil.config.example.json`](examples/anvil.config.example.json) to the root of your repo as

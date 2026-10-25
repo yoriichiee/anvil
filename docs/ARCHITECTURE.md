@@ -200,3 +200,10 @@ only for ids `A1`, `A5`, `P-*`, `R-*`, `F-*`.
 ## Safety
 Test data only. Never commit, push, merge or deploy. Bind 127.0.0.1. Escape everything rendered in the UI (DOM APIs,
 no `innerHTML` with data). No secrets in files or logs. Only the app inside Anvil's Test view is observed.
+
+## Page looks (generated manual checks)
+The server expands plan.json on every read (report.expandPlan): each page in pages x each role allowed on it gets two manual checks, laptop (1440) and phone (390), id look-<page>-<role>-<device>, area laptop/phone, lane = the UI lane, needs = the device (the Test view switches size). A plan item with the same id replaces the generated one; "page_looks": false turns them off. They count toward Complete and appear in the report like any manual check.
+
+## Page looks (generated manual checks)
+
+The server expands plan.json on every read (`report.expandPlan`): each page in `pages` x each role allowed on it gets two manual checks - laptop (1440) and phone (390) - id `look-<page>-<role>-<device>`, area `laptop`/`phone`, lane = the UI lane, `needs` = the device (the Test view switches size). A plan item with the same id replaces the generated one; `"page_looks": false` turns them off. They count toward Complete and appear in the report like any manual check.

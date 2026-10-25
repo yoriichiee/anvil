@@ -33,6 +33,30 @@ const cfgOf = opts => opts?.cfg || (DEFAULT_CFG ||= normalizeConfig({}));
 // override = {...}. Idempotent (re-applying uses auto_status). A "fail" override is a blocker only for blocker-type
 // checks (tests A1, build A5, pages P-, access R-, flags F-), matching the runner's blocker rule.
 const BLOCKER_TYPE = /^(A1$|A5$|P-|R-|F-)/;
+// Every page the PR adds or changes gets a tester look on laptop AND phone, for each role that may open it. Generated
+// (ids `look-<page>-<role>-<device>`), so the plan cannot forget them; a plan may switch it off with
+// "page_looks": false, or replace one by writing a manual item with the same id.
+export function expandPlan(plan, cfg) {
+  if (!plan || plan.page_looks === false) return plan;
+  const fm = cfg?.roles?.folder_map || {}, def = cfg?.roles?.default || cfg?.roles?.list?.[0];
+  const manual = [...(plan.manual || [])], have = new Set(manual.map(m => m.id));
+  const ui = (plan.lanes || []).includes(cfg?.review?.ui_lane || 'ui') ? (cfg?.review?.ui_lane || 'ui') : (plan.lanes || [])[0];
+  for (const p of plan.pages || []) {
+    const roles = p.roles?.length ? p.roles : [fm[String(p.page).split('/')[0]] || def].filter(Boolean);
+    for (const role of roles) for (const [device, label, size] of [['laptop', 'laptop', '1440 px'], ['phone', 'phone', '390 px']]) {
+      const id = `look-${String(p.page).replace(/\.html?$/, '').replace(/[^a-z0-9]+/gi, '-')}-${role}-${device}`;
+      if (have.has(id)) continue;
+      manual.push({ id, generated: true, area: device, lane: ui, needs: device, role, page: p.page,
+        title: `Look at ${p.page} on a ${label} (${role})`,
+        why: p.why ? `Changed in this PR: ${p.why}` : 'This page is new or changed in this PR.',
+        steps: [`Open the page as ${role} on ${label} size (${size}).`, 'Read everything on it and try each button, link and form on the page.',
+          'Scroll to the end. Compare with the other size if something looks odd.'],
+        good: `Everything fits the ${label} screen, nothing overlaps or is cut off, text is readable, and every control works.` });
+    }
+  }
+  return { ...plan, manual };
+}
+
 export function applyOverrides(results, state) {
   const ov = state?.overrides || {};
   if (!results) return results;
@@ -438,7 +462,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const dir = path.resolve(process.argv.slice(2).find(a => !a.startsWith('--') && a !== process.argv[process.argv.indexOf('--config') + 1]) || '.');
   let cfg; try { cfg = configFromArgs(); } catch (e) { if (!(e instanceof ConfigError)) throw e; console.error('note: ' + e.message + ' - using defaults'); cfg = normalizeConfig({}); }
   const rd = (f, fb) => { try { return JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8').replace(/^\uFEFF/, '')); } catch { return fb; } };
-  const plan = rd('plan.json', {}), results = rd('results.json', {}), state = rd('state.json', {});
+  const plan = expandPlan(rd('plan.json', {}), cfg), results = rd('results.json', {}), state = rd('state.json', {});
   const summary = score(plan, results, state);
   console.log(JSON.stringify(summary, null, 1));
   const d = await draft(plan, results, state, summary, { cfg, claude: !process.argv.includes('--no-claude') });

@@ -78,6 +78,9 @@ Fill every field:
 - `manual`: every expected result that needs a human, the developer's extras, and the module focus - each with `why`,
   numbered `steps`, `role` + `page` (the app turns them into a signed-in link), `good`, `needs`, `area`, `lane`.
   Keep it to what matters: usually 4-10 items. Write steps a non-developer can follow.
+  Do NOT write "look at page X on phone/laptop" items: Anvil adds one laptop and one phone check for every page in
+  `pages` and every role allowed on it (ids `look-<page>-<role>-<device>`). So list every new or changed page in
+  `pages` - that is what puts it in front of the tester on both sizes.
 - `focus`: the top 3-5 things for this module.
 
 ## 3. Start the Anvil app

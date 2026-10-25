@@ -75,3 +75,16 @@ test('custom review commands and validation of a Claude draft', async () => {
   assert.match(validateDraft(changed, f, base), /first line changed/);
   assert.equal(finalChat('see ' + REPORT_URL, ['https://example.test/1']), 'see https://example.test/1\n');
 });
+
+test('expandPlan adds a laptop and a phone look for every changed page and role', async () => {
+  const { expandPlan } = await import('../src/report.mjs');
+  const cfg = { roles: { list: ['admin', 'member'], default: 'member', folder_map: { admin: 'admin' } }, review: { ui_lane: 'ui' } };
+  const plan = { lanes: ['ui', 'app'], pages: [{ page: 'admin/team.html' }, { page: 'member/notes.html', roles: ['member', 'admin'] }],
+    manual: [{ id: 'look-admin-team-admin-phone', title: 'custom' }] };
+  const out = expandPlan(plan, cfg);
+  const looks = out.manual.filter(m => m.generated);
+  assert.equal(looks.length, 5);                                  // 1 custom kept + (1 role x 2) + (2 roles x 2) - 1
+  assert.ok(looks.every(m => ['phone', 'laptop'].includes(m.needs) && m.lane === 'ui'));
+  assert.equal(out.manual.find(m => m.id === 'look-admin-team-admin-phone').title, 'custom');
+  assert.equal(expandPlan({ ...plan, page_looks: false }, cfg).manual.length, 1);
+});

@@ -55,6 +55,7 @@ function writeJSON(file, obj) {
   }));
 }
 const EMPTY_STATE = { manual: {}, include_shots: [], rating: null, note_to_dev: '', completed: false, draft: null, sent: null };
+const readPlan = async fb => { const p = await readJSON(F.plan, fb); return p && p !== fb ? report.expandPlan(p, cfg) : p; };
 const loadState = async () => {
   const s = await readJSON(F.state, null);
   if (!s && fs.existsSync(F.state)) {                         // unreadable: keep a copy instead of silently starting over
@@ -205,7 +206,7 @@ function env(plan) {
 
 // ---- data + SSE -------------------------------------------------------------------------------------------------
 async function getData() {
-  const [plan, results, state] = await Promise.all([readJSON(F.plan, null), readJSON(F.results, null), loadState()]);
+  const [plan, results, state] = await Promise.all([readPlan(null), readJSON(F.results, null), loadState()]);
   const res = results ? { ...results } : null;
   if (res && state.tool_shots?.length) {                      // shots taken with /api/shot while the runner owned the file
     const have = new Set((res.shots || []).map(s => s.file));
@@ -350,7 +351,7 @@ const routes = {
   'GET /api/data': async () => { checkHealth(); return getData(); },
   // every open PR with the testing label assigned to the signed-in gh user (read-only); this PR is flagged current:true
   'GET /api/next': async () => {
-    const plan = await readJSON(F.plan, {});
+    const plan = await readPlan({});
     if (!REPO) return { prs: [{ number: PR, title: plan.title || '', url: plan.url || '', current: true }] };
     const r = await run('gh', ['pr', 'list', '-R', REPO, '--assignee', '@me', '--label', cfg.github.testing_label, '--state', 'open', '--json', 'number,title,url', '--limit', '100'], { timeout: 20000 });
     if (r.code !== 0) bad('Could not ask GitHub for your PRs: ' + (r.stderr.trim().split('\n')[0] || r.error), 502);
@@ -396,7 +397,7 @@ const routes = {
     return { lines, next: lines.length ? lines[lines.length - 1].n : Math.max(after, runN) };
   },
   'POST /api/manual': async b => {
-    const plan = await readJSON(F.plan, {});
+    const plan = await readPlan({});
     if (!(plan.manual || []).some(m => m.id === b.id)) bad('Unknown manual check id');
     const answer = b.answer ?? null;
     if (![null, 'works', 'broken', 'unsure'].includes(answer)) bad('answer must be works, broken, unsure or null');
@@ -404,7 +405,7 @@ const routes = {
     pushData(); return { ok: true };
   },
   'POST /api/manual-shot': async b => {
-    const plan = await readJSON(F.plan, {});
+    const plan = await readPlan({});
     if (!(plan.manual || []).some(m => m.id === b.id)) bad('Unknown manual check id');
     const m = /^data:image\/(png|jpeg);base64,([A-Za-z0-9+/=\s]+)$/.exec(String(b.dataUrl || ''));
     if (!m) bad('dataUrl must be a base64 PNG or JPEG');
@@ -442,7 +443,7 @@ const routes = {
     const role = ROLES.includes(b.role) || b.role === 'anon' ? b.role : null, device = [...DEVICES, 'fit'].includes(b.device) ? b.device : null;
     let manualId = null;
     if (b.manualId != null && b.manualId !== '') {
-      const plan = await readJSON(F.plan, {});
+      const plan = await readPlan({});
       if (!(plan.manual || []).some(x => x.id === b.manualId)) bad('Unknown manual check id');
       manualId = b.manualId;
     }
@@ -496,7 +497,7 @@ const routes = {
   },
   'POST /api/complete': async b => {
     if (await isRunning() || stopping) bad('Wait until the automatic checks have finished (or stop them)', 409);
-    const plan = await readJSON(F.plan, null);
+    const plan = await readPlan(null);
     if (!plan) bad('plan.json is missing', 409);
     const rating = b.rating == null || b.rating === '' ? null : +b.rating;
     if (rating !== null && !(Number.isInteger(rating) && rating >= 1 && rating <= 5)) bad('rating must be 1 to 5');
@@ -523,7 +524,7 @@ routes['POST /api/reset-demo'] = routes['POST /api/reset-data'];   // older dash
 let sending = false;
 
 async function doSend(b) {
-  const plan = await readJSON(F.plan, null), state = await loadState();
+  const plan = await readPlan(null), state = await loadState();
   if (!plan) bad('plan.json is missing', 409);
   if (!state.completed || !state.draft) bad('Finish the test first (complete)', 409);
   if (state.sent) bad('This report was already sent', 409);
