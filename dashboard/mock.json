@@ -1,0 +1,171 @@
+{
+  "plan": {
+    "pr": 41,
+    "title": "notes: shared notebooks and autosave",
+    "url": "https://github.com/acme/notes/pull/41",
+    "module": "notebooks",
+    "lanes": ["ui", "app"],
+    "author": "alex-doe",
+    "tester": "sam-tester",
+    "owner": "jordan-owner",
+    "commit": "8763b63",
+    "branch": "notebooks/sharing",
+    "issue": { "number": 17, "url": "https://github.com/acme/notes/issues/17" },
+    "review_note": "docs/reviews/notebooks-sharing.md",
+    "copilot": {
+      "summary": [
+        "Members can share a notebook with a guest link.",
+        "The editor saves a note by itself every few seconds.",
+        "Admins see who shared what on the members page."
+      ],
+      "extras": [
+        "A search box on the notes list (not in the issue).",
+        "Pinned notes stay at the top."
+      ],
+      "security": [
+        "New API routes for sharing: check that guests cannot change notes.",
+        "A guest link should only open the one shared notebook."
+      ],
+      "tips": [
+        "For autosave checks, type for at least 10 seconds before reloading.",
+        "For role checks, use the 'Open as' button: it signs you in as the right person.",
+        "For phone checks, use the Phone button in the Test view."
+      ]
+    },
+    "focus": [
+      "Autosave: a reload must never lose typed text.",
+      "Who can see and change a shared notebook (member yes, guest read-only).",
+      "The notes list and editor on a phone."
+    ],
+    "pages": [
+      { "page": "member/notes.html", "roles": ["member"], "why": "Expected: notes list with a Share button per notebook" },
+      { "page": "member/editor.html", "roles": ["member"], "why": "Expected: editor with a 'Saved' indicator" },
+      { "page": "admin/members.html", "roles": ["admin"], "why": "Expected: members list with a 'Shared notebooks' column" },
+      { "page": "guest/shared.html", "roles": ["guest"], "why": "Expected: the shared notebook, read-only" }
+    ],
+    "access": [
+      { "id": "r1", "name": "Guest cannot list members", "as": "guest", "method": "GET", "path": "members", "expect": [401, 403] },
+      { "id": "r2", "name": "Guest cannot edit a note", "as": "guest", "method": "POST", "path": "notes/1", "expect": [401, 403] },
+      { "id": "r3", "name": "Member can list notes", "as": "member", "method": "GET", "path": "notes", "expect": [200] }
+    ],
+    "flags": [
+      { "id": "f1", "flag": "sharing", "as": "member", "path": "shares" }
+    ],
+    "manual": [
+      {
+        "id": "m1", "area": "works", "lane": "app", "title": "Autosave survives a reload",
+        "why": "If autosave fails, people lose what they typed.",
+        "steps": ["Open the note 'Weekly plan'.", "Type a new line and wait until it says Saved.", "Reload the page (F5)."],
+        "role": "member", "page": "member/editor.html", "good": "The new line is still there after the reload.", "needs": "any"
+      },
+      {
+        "id": "m2", "area": "roles", "lane": "app", "title": "A guest sees only the shared notebook",
+        "why": "Showing other notebooks to a guest would leak private notes.",
+        "steps": ["Open the shared page as the guest.", "Look at the notebook list.", "Try to open another notebook from the address bar."],
+        "role": "guest", "page": "guest/shared.html", "good": "Only the shared notebook is shown, and it cannot be edited.", "needs": "any"
+      },
+      {
+        "id": "m3", "area": "phone", "lane": "ui", "title": "Edit a note on a phone",
+        "why": "Many members write notes on their phone.",
+        "steps": ["Switch the Test view to Phone.", "Open a note.", "Type a line and scroll down."],
+        "role": "member", "page": "member/editor.html", "good": "Toolbar, text and Saved indicator fit on the screen; no sideways scrolling.", "needs": "phone"
+      },
+      {
+        "id": "m4", "area": "laptop", "lane": "ui", "title": "Admin reviews shared notebooks",
+        "why": "This is the main new thing admins will look at.",
+        "steps": ["Open the members page as the admin.", "Sort by 'Shared notebooks'.", "Open the details of Alex Doe."],
+        "role": "admin", "page": "admin/members.html", "good": "The column sorts correctly and the details list the shared notebook.", "needs": "laptop"
+      },
+      {
+        "id": "m5", "area": "stability", "lane": "app", "title": "Saving twice does not make two copies",
+        "why": "A double click on a slow connection should not duplicate a note.",
+        "steps": ["Create a new note.", "Double-click 'Save' quickly.", "Open the notes list."],
+        "role": "member", "page": "member/notes.html", "good": "Only one copy of the note is listed.", "needs": "any"
+      }
+    ]
+  },
+  "results": {
+    "pr": 41, "commit": "8763b63", "started": "2026-10-25T09:12:04Z", "finished": null, "running": true,
+    "checks": [
+      { "id": "A1", "group": "Tests", "name": "Test suite", "status": "flake", "detail": "128 tests, 2 failed the first time: 1 passed on re-run, 1 also fails on main", "area": "stability", "blocker": false, "shots": [], "ms": 48211 },
+      { "id": "A2-autosave.test.js", "group": "Tests", "name": "Re-run autosave.test.js", "status": "flake", "detail": "Failed once, passed on re-run", "area": "stability", "blocker": false, "shots": [], "ms": 2310 },
+      { "id": "A3-export.test.js", "group": "Tests", "name": "export.test.js on main", "status": "preexisting", "detail": "Also fails on main, so it is not caused by this PR", "area": "stability", "blocker": false, "shots": [], "ms": 9120 },
+      { "id": "A4", "group": "CI", "name": "GitHub CI", "status": "pass", "detail": "3 of 3 checks are green", "area": "stability", "blocker": false, "shots": [], "ms": 1404 },
+      { "id": "A5", "group": "Build", "name": "Build", "status": "pass", "detail": "Built 24 pages in 2.1 s", "area": "stability", "blocker": false, "shots": [], "ms": 2104 },
+      { "id": "P-member-notes.html-member", "group": "Pages", "name": "Member · notes.html", "status": "pass", "detail": "Loads, no errors, no sample names", "area": "works", "blocker": false, "shots": ["shots/member-notes-phone.png", "shots/member-notes-laptop.png"], "ms": 3220 },
+      { "id": "P-member-editor.html-member", "group": "Pages", "name": "Member · editor.html", "status": "pass", "detail": "Loads, no errors, no sample names", "area": "works", "blocker": false, "shots": ["shots/member-editor-phone.png", "shots/member-editor-laptop.png"], "ms": 2970 },
+      { "id": "P-admin-members.html-admin", "group": "Pages", "name": "Admin · members.html", "status": "pass", "detail": "Loads, no errors, no sample names", "area": "works", "blocker": false, "shots": ["shots/admin-members-phone.png", "shots/admin-members-laptop.png"], "ms": 3410 },
+      { "id": "P-guest-shared.html-guest", "group": "Pages", "name": "Guest · shared.html", "status": "pending", "detail": "", "area": "works", "blocker": false, "shots": [], "ms": 0 },
+      { "id": "L-member-notes.html-member", "group": "Layout", "name": "Member · notes.html · phone width", "status": "warn", "detail": "page is 412px wide on a 390px phone (scrolls sideways)", "area": "phone", "blocker": false, "shots": ["shots/member-notes-phone.png"], "ms": 640 },
+      { "id": "L-member-editor.html-member", "group": "Layout", "name": "Member · editor.html · phone width", "status": "pass", "detail": "fits 390px, no sideways scroll", "area": "phone", "blocker": false, "shots": [], "ms": 610 },
+      { "id": "L-guest-shared.html-guest", "group": "Layout", "name": "Guest · shared.html · phone width", "status": "pending", "detail": "", "area": "phone", "blocker": false, "shots": [], "ms": 0 },
+      { "id": "R-r1", "group": "Roles", "name": "Guest cannot list members", "status": "pass", "detail": "guest GET members: got 403 (expected 401 or 403)", "area": "roles", "blocker": false, "shots": [], "ms": 210 },
+      { "id": "R-r2", "group": "Roles", "name": "Guest cannot edit a note", "status": "pending", "detail": "", "area": "roles", "blocker": false, "shots": [], "ms": 0 },
+      { "id": "R-r3", "group": "Roles", "name": "Member can list notes", "status": "pending", "detail": "", "area": "roles", "blocker": false, "shots": [], "ms": 0 },
+      { "id": "F-f1", "group": "Flags", "name": "sharing off/on · member GET shares", "status": "skip", "detail": "flag tool not available (scripts/flags.mjs is missing)", "area": "works", "blocker": false, "shots": [], "ms": 0 },
+      { "id": "X-member-notes.html", "group": "Accessibility", "name": "notes.html · names and labels", "status": "warn", "detail": "button-name: 2 (first: .icon-only-filter)", "area": "laptop", "blocker": false, "shots": [], "ms": 1820 },
+      { "id": "X-admin-members.html", "group": "Accessibility", "name": "members.html · names and labels", "status": "pending", "detail": "", "area": "laptop", "blocker": false, "shots": [], "ms": 0 }
+    ],
+    "shots": [
+      { "file": "shots/member-notes-phone.png", "page": "member/notes.html", "role": "member", "device": "phone", "source": "auto", "at": "2026-10-25T09:13:10Z" },
+      { "file": "shots/member-notes-laptop.png", "page": "member/notes.html", "role": "member", "device": "laptop", "source": "auto", "at": "2026-10-25T09:13:12Z" },
+      { "file": "shots/member-editor-phone.png", "page": "member/editor.html", "role": "member", "device": "phone", "source": "auto", "at": "2026-10-25T09:13:20Z" },
+      { "file": "shots/member-editor-laptop.png", "page": "member/editor.html", "role": "member", "device": "laptop", "source": "auto", "at": "2026-10-25T09:13:22Z" },
+      { "file": "shots/admin-members-phone.png", "page": "admin/members.html", "role": "admin", "device": "phone", "source": "auto", "at": "2026-10-25T09:13:31Z" },
+      { "file": "shots/admin-members-laptop.png", "page": "admin/members.html", "role": "admin", "device": "laptop", "source": "auto", "at": "2026-10-25T09:13:33Z" }
+    ]
+  },
+  "state": {
+    "manual": { "m1": { "answer": "works", "note": "Reloaded right after Saved, the line was still there.", "shots": [], "at": "2026-10-25T09:15:00Z" } },
+    "include_shots": ["shots/member-editor-phone.png"],
+    "rating": null, "note_to_dev": "", "completed": false,
+    "draft": null,
+    "sent": null
+  },
+  "env": {
+    "origin": "http://127.0.0.1:4400",
+    "port": 8795,
+    "roleLinks": {
+      "admin": "http://127.0.0.1:4400/dev/login/admin",
+      "member": "http://127.0.0.1:4400/dev/login/member",
+      "guest": "http://127.0.0.1:4400/dev/login/guest"
+    },
+    "prUrl": "https://github.com/acme/notes/pull/41",
+    "ciUrl": "https://github.com/acme/notes/pull/41/checks",
+    "issueUrl": "https://github.com/acme/notes/issues/17",
+    "reviewNoteUrl": "https://github.com/acme/notes/blob/notebooks/sharing/docs/reviews/notebooks-sharing.md",
+    "qaDir": ".qa/pr-41",
+    "project": {
+      "appName": "Acme Notes",
+      "roles": ["admin", "member", "guest"],
+      "pagePath": "/app/{page}",
+      "pagePrefix": "/app/",
+      "pageExample": "member/notes.html",
+      "loginPath": "/dev/login/{role}?next={page}",
+      "apiBase": "/api/",
+      "apiMatch": "/api/",
+      "canReset": true,
+      "startCommand": "node server.mjs",
+      "review": { "lanes": ["ui", "app"], "pass": "/pass {lane}", "fix": "/fix {lane}" },
+      "chatName": "team chat",
+      "helpText": "Stuck? Ask in Claude Code."
+    }
+  },
+  "health": [
+    { "id": "app", "ok": true, "message": "Acme Notes answered 200 at http://127.0.0.1:4400", "fix": "" },
+    { "id": "gh", "ok": true, "message": "GitHub CLI is signed in", "fix": "" },
+    { "id": "chrome", "ok": true, "message": "Chrome found for screenshots", "fix": "" },
+    { "id": "claude", "ok": false, "message": "Claude CLI was not found, so the report will use the simple built-in template.", "fix": "Open a new terminal and run `claude --version`. If it is not recognized, reinstall Claude Code, then press Check again." }
+  ],
+  "mock_outcomes": {
+    "P-guest-shared.html-guest": { "status": "fail", "detail": "1 console error: TypeError: Cannot read properties of undefined (reading 'title')", "ms": 2880, "blocker": true, "shots": ["shots/guest-shared-phone.png", "shots/guest-shared-laptop.png"], "rerun": { "status": "flake", "detail": "Failed once, loaded cleanly on re-run", "blocker": false } },
+    "L-guest-shared.html-guest": { "status": "pass", "detail": "fits 390px, no sideways scroll", "ms": 590 },
+    "R-r2": { "status": "skip", "detail": "POST is not sent automatically (it would change test data): check it by hand", "ms": 2 },
+    "R-r3": { "status": "pass", "detail": "member GET notes: got 200 (expected 200)", "ms": 180 },
+    "X-admin-members.html": { "status": "pass", "detail": "axe: no image-alt, input-image-alt, button-name, link-name, label, select-name violations", "ms": 1710 }
+  },
+  "mock_next": [
+    { "number": 44, "title": "tags: bulk rename", "url": "https://github.com/acme/notes/pull/44" },
+    { "number": 47, "title": "export: download a notebook as Markdown", "url": "https://github.com/acme/notes/pull/47" }
+  ]
+}

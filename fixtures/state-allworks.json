@@ -1,0 +1,8 @@
+{
+  "manual": {
+    "m1": { "answer": "works", "note": "", "shots": [], "at": "2026-10-25T10:10:00Z" },
+    "m2": { "answer": "works", "note": "", "shots": [], "at": "2026-10-25T10:11:00Z" },
+    "m3": { "answer": "works", "note": "", "shots": [], "at": "2026-10-25T10:12:00Z" }
+  },
+  "include_shots": [], "rating": 5, "note_to_dev": "", "completed": false, "draft": null, "sent": null
+}

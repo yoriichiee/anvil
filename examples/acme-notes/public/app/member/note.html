@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
+  <title>Note editor · Acme Notes</title>
+  <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/assets/css/app.css">
+  <script type="module" src="/assets/js/note.js"></script>
+</head>
+<body>
+  <header class="topbar" id="topbar"></header>
+  <main class="wrap" id="main">
+    <div class="page-head">
+      <div><h1 id="heading">New note</h1><p id="meta">Write it down, then decide who can read it.</p></div>
+    </div>
+    <div id="content"><p class="loading" aria-live="polite">Loading the editor…</p></div>
+    <form id="form" class="grid two" hidden novalidate>
+      <section class="card">
+        <div class="field">
+          <label for="title">Title</label>
+          <input id="title" name="title" class="editor-title" type="text" maxlength="120" required placeholder="What is this note about?">
+        </div>
+        <div class="field">
+          <label for="body">Note</label>
+          <textarea id="body" name="body" maxlength="20000" placeholder="Start writing…"></textarea>
+          <span class="help" id="count" aria-live="polite">0 words</span>
+        </div>
+      </section>
+      <aside class="card editor-side" aria-label="Note options">
+        <div class="field">
+          <label class="check" for="shared"><input id="shared" name="shared" type="checkbox">
+            <span>Share with guests<span class="help">Guests can read it on their "Shared with me" page.</span></span></label>
+        </div>
+        <div class="field" id="tags-field" hidden>
+          <label for="tags">Tags</label>
+          <input id="tags" name="tags" type="text" placeholder="planning, q4" autocomplete="off">
+          <span class="help">Up to 8, separated by commas. Lower-case letters, numbers and dashes.</span>
+        </div>
+        <div class="form-actions">
+          <button class="btn" type="submit" id="save">Save note</button>
+          <a class="btn secondary" href="/app/member/notes.html">Back to notes</a>
+        </div>
+        <p class="status muted small" id="status" aria-live="polite"></p>
+      </aside>
+    </form>
+  </main>
+</body>
+</html>

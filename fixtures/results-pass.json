@@ -1,0 +1,18 @@
+{
+  "pr": 999, "commit": "abc1234", "started": "2026-10-25T10:00:00Z", "finished": "2026-10-25T10:03:00Z", "running": false,
+  "checks": [
+    { "id": "A1", "group": "Tests", "name": "Test suite", "status": "pass", "detail": "128 tests, 0 failed", "area": "stability", "blocker": false, "shots": [], "ms": 30000 },
+    { "id": "A4", "group": "CI", "name": "CI checks", "status": "pass", "detail": "3 checks green", "area": "stability", "blocker": false, "shots": [], "ms": 900 },
+    { "id": "A5", "group": "Build", "name": "Build", "status": "pass", "detail": "built", "area": "stability", "blocker": false, "shots": [], "ms": 5000 },
+    { "id": "P-member-notes.html-member", "group": "Pages", "name": "Member · notes.html", "status": "pass", "detail": "loads, no errors", "area": "works", "blocker": false, "shots": ["shots/member-notes-member-phone.png", "shots/member-notes-member-laptop.png"], "ms": 2100 },
+    { "id": "P-admin-members.html-admin", "group": "Pages", "name": "Admin · members.html", "status": "pass", "detail": "loads, no errors", "area": "works", "blocker": false, "shots": ["shots/admin-members-admin-laptop.png"], "ms": 2000 },
+    { "id": "L-member-notes.html-member", "group": "Layout", "name": "Member · notes.html · phone width", "status": "pass", "detail": "no sideways scroll", "area": "phone", "blocker": false, "shots": [], "ms": 300 },
+    { "id": "R-r1", "group": "Roles", "name": "Guest cannot list members", "status": "pass", "detail": "got 403", "area": "roles", "blocker": false, "shots": [], "ms": 400 },
+    { "id": "X-member-notes.html", "group": "Accessibility", "name": "notes.html · names and labels", "status": "pass", "detail": "0 issues", "area": "laptop", "blocker": false, "shots": [], "ms": 800 }
+  ],
+  "shots": [
+    { "file": "shots/member-notes-member-phone.png", "page": "member/notes.html", "role": "member", "device": "phone", "source": "auto", "at": "2026-10-25T10:01:00Z" },
+    { "file": "shots/member-notes-member-laptop.png", "page": "member/notes.html", "role": "member", "device": "laptop", "source": "auto", "at": "2026-10-25T10:01:00Z" },
+    { "file": "shots/admin-members-admin-laptop.png", "page": "admin/members.html", "role": "admin", "device": "laptop", "source": "auto", "at": "2026-10-25T10:01:30Z" }
+  ]
+}

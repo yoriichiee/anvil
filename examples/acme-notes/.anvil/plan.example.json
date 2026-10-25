@@ -1,0 +1,80 @@
+{
+  "pr": 7,
+  "title": "notes: add tags behind ff_tags",
+  "url": "https://github.com/acme-example/acme-notes/pull/7",
+  "module": "notes",
+  "lanes": ["ui", "app"],
+  "author": "sam-lee-dev",
+  "tester": "priya-rao-qa",
+  "owner": "alex-doe-lead",
+  "commit": "3f9c2ab",
+  "branch": "notes/tags",
+  "issue": { "number": 5, "url": "https://github.com/acme-example/acme-notes/issues/5" },
+  "review_note": "docs/reviews/notes-tags.md",
+  "copilot": {
+    "summary": [
+      "Notes can now carry up to 8 tags; the notes list shows a Tags column and a tag bar with counts.",
+      "Everything is behind the feature flag ff_tags: with it off, GET /api/tags answers 404 not_enabled and no tag UI is shown.",
+      "The editor gets a Tags field (comma separated); the admin dashboard swaps 'Words written' for 'Tags in use' when the flag is on."
+    ],
+    "extras": [
+      "The developer also touched the settings API while adding the tags route (worth a role check on /api/settings).",
+      "The notes table got a new column, so check it still fits on a phone."
+    ],
+    "security": [
+      "Tag input is validated on the server (lower-case words, max 8); check the editor shows the error instead of failing silently."
+    ],
+    "tips": [
+      "works: do each step once with the flag on (node flags.mjs --on=ff_tags) and note what you see.",
+      "roles: use the role switcher in the ribbon; a guest must never see an edit button.",
+      "phone: switch the device to Phone 390 and scroll the page sideways - if it moves, that is a fail.",
+      "stability: reload the page after saving; your change must still be there."
+    ]
+  },
+  "focus": [
+    "Tags show up in the notes list and the editor only when ff_tags is on",
+    "Settings stay admin-only (a member must get 403 from GET /api/settings)",
+    "The notes list fits a 390 px phone without sideways scrolling",
+    "Guests can read shared notes, and nothing else"
+  ],
+  "pages": [
+    { "page": "member/notes.html", "roles": ["member"], "why": "Expected: notes table, and with ff_tags on a Tags column and a tag bar" },
+    { "page": "member/note.html", "roles": ["member"], "why": "Expected: editor with a Tags field when ff_tags is on" },
+    { "page": "admin/dashboard.html", "roles": ["admin"], "why": "Expected: 'Tags in use' card when ff_tags is on" },
+    { "page": "admin/settings.html", "roles": ["admin"], "why": "Expected: settings form loads and saves" },
+    { "page": "guest/shared.html", "roles": ["guest"], "why": "Expected: shared notes only, read-only, tags shown when on" }
+  ],
+  "access": [
+    { "id": "r1", "name": "Guest cannot list the team", "as": "guest", "method": "GET", "path": "team", "expect": [403] },
+    { "id": "r2", "name": "Member cannot read workspace settings", "as": "member", "method": "GET", "path": "settings", "expect": [403] },
+    { "id": "r3", "name": "Guest cannot read workspace settings", "as": "guest", "method": "GET", "path": "settings", "expect": [403] },
+    { "id": "r4", "name": "Signed-out visitor cannot list notes", "as": "anon", "method": "GET", "path": "notes", "expect": [401] },
+    { "id": "r5", "name": "Guest cannot open a team-only note", "as": "guest", "method": "GET", "path": "notes/n1", "expect": [403, 404] },
+    { "id": "r6", "name": "Guest cannot create a note", "as": "guest", "method": "POST", "path": "notes", "expect": [403] }
+  ],
+  "flags": [
+    { "id": "f1", "flag": "ff_tags", "as": "member", "path": "tags" }
+  ],
+  "manual": [
+    { "id": "m1", "area": "works", "lane": "app", "title": "Tags save and come back after a reload",
+      "why": "Tags that silently disappear make the feature useless",
+      "steps": ["Turn the flag on: node flags.mjs --on=ff_tags", "Open Notes and click 'Onboarding checklist'", "Type 'onboarding, how-to, week-one' in Tags and press Save note", "Reload the page"],
+      "role": "member", "page": "member/note.html?id=n2", "good": "The three tags are still in the Tags field after the reload, and the notes list shows them", "needs": "any" },
+    { "id": "m2", "area": "works", "lane": "app", "title": "A bad tag shows a clear message",
+      "why": "Users need to know why a save did not work",
+      "steps": ["With the flag on, open New note", "Type a title, then 'Big Ideas!' in Tags", "Press Save note"],
+      "role": "member", "page": "member/note.html", "good": "A short message under the buttons explains the tag rule; nothing is saved", "needs": "any" },
+    { "id": "m3", "area": "roles", "lane": "app", "title": "Guests see tags but cannot edit",
+      "why": "Guests are outside the company and must stay read-only",
+      "steps": ["Switch the role to guest", "Open Shared with me", "Look for any edit button, editor link or settings link"],
+      "role": "guest", "page": "guest/shared.html", "good": "Tags show on the shared cards; there is no way to edit anything", "needs": "any" },
+    { "id": "m4", "area": "phone", "lane": "ui", "title": "Notes list fits a phone",
+      "why": "Most of the team checks notes on their phone",
+      "steps": ["Switch the device to Phone 390", "Open Notes", "Try to scroll the page sideways"],
+      "role": "member", "page": "member/notes.html", "good": "The page does not move sideways; every column can be read", "needs": "phone" },
+    { "id": "m5", "area": "laptop", "lane": "ui", "title": "Turning the flag off hides every trace of tags",
+      "why": "A half-hidden feature confuses people while it is being tested",
+      "steps": ["Turn the flag off: node flags.mjs --off=ff_tags", "Reload Notes, the editor and the admin dashboard"],
+      "role": "member", "page": "member/notes.html", "good": "No Tags column, no tag bar, no Tags field; the dashboard shows 'Words written' again", "needs": "laptop" }
+  ]
+}

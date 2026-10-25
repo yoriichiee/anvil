@@ -1,0 +1,69 @@
+{
+  "name": "Acme Notes",
+  "data_dir": ".qa",
+  "github": { "repo": null, "testing_label": "needs-testing" },
+  "server": { "port": 8795 },
+  "app": {
+    "origin": "http://127.0.0.1:4400",
+    "origin_env": "ACME_ORIGIN",
+    "start_command": "node server.mjs",
+    "health_path": "/dev/",
+    "api_context_path": "/dev/",
+    "login_path": "/dev/login/{role}?next={page}",
+    "reset_path": "/dev/reset",
+    "page_path": "/app/{page}",
+    "page_pattern": "^(admin|member|guest)/[a-z0-9-]+\\.html(\\?[A-Za-z0-9=&_%.-]*)?$",
+    "page_example": "member/notes.html",
+    "api_base": "/api/",
+    "api_match": "/api/",
+    "sample_names": "Lorem ipsum|John Doe|Jane Doe|\\[object Object\\]|\\bundefined\\b|\\bNaN\\b"
+  },
+  "roles": {
+    "list": ["admin", "member", "guest"],
+    "default": "member",
+    "folder_map": { "admin": "admin", "member": "member", "guest": "guest" }
+  },
+  "build": {
+    "name": "Build (copy public/ + manifest.json)",
+    "command": ["node", "{root}/build.mjs", "--out={build}"],
+    "manifest": "manifest.json",
+    "manifest_key": "pages",
+    "app_dir": "dist",
+    "app_dir_env": "ACME_APP_DIR",
+    "timeout_minutes": 2
+  },
+  "tests": {
+    "command": ["node", "{root}/run-tests.mjs"],
+    "filter_args": ["{filter}"],
+    "summary_regex": "^RESULT: (?<total>\\d+) tests, (?<failed>\\d+) failed, (?<secs>[\\d.]+) s(?: \\((?<files>[^)]*)\\))?$",
+    "files_separator": ", ",
+    "files_dir": "tests",
+    "file_section_end_regex": "\\n(?=\\S)",
+    "fail_name_regex": "^\\s+FAIL (.+)$",
+    "rerun_failed": true,
+    "compare_on_main": false,
+    "timeout_minutes": 5
+  },
+  "flags": {
+    "command": ["node", "{root}/flags.mjs"],
+    "on_args": ["--on={flag}"],
+    "off_args": ["--off={flag}"],
+    "list_args": [],
+    "list_regex": "^flags on: (.*)$",
+    "none_text": "(none)",
+    "flag_pattern": "^ff_[a-z0-9_]{1,40}$",
+    "off_expect": { "status": 404, "code": "not_enabled" },
+    "env": { "ACME_DATA_DIR": "{tmp}/acme-notes-data" }
+  },
+  "review": {
+    "lanes": ["app", "ui"],
+    "ui_lane": "ui",
+    "default_lane": "app",
+    "pass_command": "/pass {lane}",
+    "fix_command": "/fix {lane}",
+    "chat_name": "team chat",
+    "help_text": "Stuck? Ask in Claude Code.",
+    "signature": "Tested with Anvil · Claude for @{tester}",
+    "recheck_command": "anvil-run --pr {pr}"
+  }
+}

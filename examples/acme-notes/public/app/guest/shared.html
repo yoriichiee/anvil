@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
+  <title>Shared with me · Acme Notes</title>
+  <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/assets/css/app.css">
+  <script type="module" src="/assets/js/shared.js"></script>
+</head>
+<body>
+  <header class="topbar" id="topbar"></header>
+  <main class="wrap" id="main">
+    <section class="hero">
+      <div>
+        <h1>Shared with you</h1>
+        <p id="hero-text">Notes the Acme Inc team has shared with guests. You can read them here; only the team can edit them.</p>
+      </div>
+      <!-- DEMO BUG 2 (intentional, see DEMO-BUGS.md): this image has no alt attribute (axe rule image-alt).
+           The fix is alt="" (it is decorative) or a short description. -->
+      <img src="/assets/img/shared-hero.svg" width="220" height="150">
+    </section>
+    <div id="content"><p class="loading" aria-live="polite">Loading shared notes…</p></div>
+  </main>
+</body>
+</html>

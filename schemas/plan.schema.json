@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "plan.schema.json",
+  "title": "Anvil plan.json (written by Claude in the anvil skill, read by run.mjs and server.mjs)",
+  "description": "Role names, lane names, page format and flag format are checked at run time against anvil.config.json (roles.list, review.lanes, app.page_pattern, flags.flag_pattern).",
+  "type": "object",
+  "required": ["pr", "title", "lanes", "pages", "access", "manual"],
+  "properties": {
+    "pr": { "type": "integer", "minimum": 0, "description": "PR number; 0 = local dry run (CI check skipped)" },
+    "title": { "type": "string" },
+    "url": { "type": "string" },
+    "module": { "type": "string", "description": "area of the product the PR touches (free text, used to pick focus notes)" },
+    "lanes": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/lane" } },
+    "author": { "type": "string", "description": "GitHub login of the developer" },
+    "tester": { "type": "string", "description": "GitHub login of the tester (the signed-in gh user)" },
+    "owner": { "type": "string", "description": "GitHub login of the final reviewer (default: review.owner in the config)" },
+    "commit": { "type": "string" },
+    "branch": { "type": "string" },
+    "issue": { "type": ["object", "null"], "properties": { "number": { "type": "integer" }, "url": { "type": "string" } } },
+    "review_note": { "type": ["string", "null"], "description": "repo path of a review note for this PR, if the project keeps one" },
+    "copilot": {
+      "type": "object",
+      "properties": {
+        "summary": { "$ref": "#/$defs/lines" }, "extras": { "$ref": "#/$defs/lines" },
+        "security": { "$ref": "#/$defs/lines", "description": "vague notes only; never sent to Claude for the public report" },
+        "tips": { "$ref": "#/$defs/lines" }
+      }
+    },
+    "focus": { "$ref": "#/$defs/lines" },
+    "pages": {
+      "type": "array",
+      "items": {
+        "type": "object", "required": ["page", "roles"],
+        "properties": {
+          "page": { "$ref": "#/$defs/page" },
+          "roles": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/role" } },
+          "why": { "type": "string" }
+        }
+      }
+    },
+    "access": {
+      "type": "array",
+      "items": {
+        "type": "object", "required": ["id", "as", "path", "expect"],
+        "properties": {
+          "id": { "$ref": "#/$defs/id" },
+          "name": { "type": "string" },
+          "as": { "anyOf": [{ "$ref": "#/$defs/role" }, { "const": "anon" }], "description": "anon = signed out" },
+          "method": { "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"], "default": "GET", "description": "only GET is sent automatically; others are skipped" },
+          "path": { "$ref": "#/$defs/route" },
+          "expect": { "oneOf": [{ "$ref": "#/$defs/status" }, { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/status" } }] }
+        }
+      }
+    },
+    "flags": {
+      "type": "array",
+      "description": "feature flags the PR uses; skipped when the config has no flags section",
+      "items": {
+        "type": "object", "required": ["id", "flag", "as", "path"],
+        "properties": {
+          "id": { "$ref": "#/$defs/id" },
+          "flag": { "type": "string", "minLength": 1, "maxLength": 80 },
+          "as": { "$ref": "#/$defs/role" },
+          "path": { "$ref": "#/$defs/route" }
+        }
+      }
+    },
+    "manual": {
+      "type": "array",
+      "items": {
+        "type": "object", "required": ["id", "area", "lane", "title", "steps", "good"],
+        "properties": {
+          "id": { "$ref": "#/$defs/id" },
+          "area": { "enum": ["works", "roles", "phone", "laptop", "stability"] },
+          "lane": { "$ref": "#/$defs/lane" },
+          "title": { "type": "string" },
+          "why": { "type": "string" },
+          "steps": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+          "role": { "anyOf": [{ "$ref": "#/$defs/role" }, { "const": "anon" }] },
+          "page": { "$ref": "#/$defs/page" },
+          "good": { "type": "string" },
+          "needs": { "enum": ["phone", "laptop", "any"], "default": "any" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "lines": { "type": "array", "items": { "type": "string" } },
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9_-]{1,40}$" },
+    "role": { "type": "string", "pattern": "^[a-z][a-z0-9_-]{0,30}$", "description": "one of roles.list in anvil.config.json" },
+    "lane": { "type": "string", "pattern": "^[a-z][a-z0-9_-]{0,20}$", "description": "one of review.lanes in anvil.config.json" },
+    "page": { "type": "string", "pattern": "^(?!.*\\.\\.)[A-Za-z0-9_][A-Za-z0-9_./-]*$", "description": "the {page} part of app.page_path, e.g. member/notes.html" },
+    "route": { "type": "string", "pattern": "^(?!.*\\.\\.)[A-Za-z0-9_/?=&.%-]+$", "description": "API route relative to app.api_base, e.g. notes or notes/3" },
+    "status": { "type": "integer", "minimum": 100, "maximum": 599 }
+  }
+}

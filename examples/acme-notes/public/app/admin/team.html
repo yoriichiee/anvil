@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
+  <title>Team · Acme Notes</title>
+  <link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/assets/css/app.css">
+  <script type="module" src="/assets/js/team.js"></script>
+</head>
+<body>
+  <header class="topbar" id="topbar"></header>
+  <main class="wrap" id="main">
+    <div class="page-head">
+      <div><h1>Team</h1><p>Everyone who can open this workspace, and what they can do.</p></div>
+      <div class="field search">
+        <label for="q">Search the team</label>
+        <input id="q" type="search" placeholder="Name, email or role" autocomplete="off">
+      </div>
+    </div>
+    <section class="card" aria-labelledby="team-h">
+      <div class="card-head"><h2 id="team-h">People</h2><span class="muted small" id="count" aria-live="polite"></span></div>
+      <div id="content"><p class="loading" aria-live="polite">Loading the team…</p></div>
+    </section>
+    <section class="card" aria-labelledby="roles-h">
+      <h2 id="roles-h">What each role can do</h2>
+      <ul class="list">
+        <li><span class="pill pill-admin">admin</span><div class="grow">Everything: notes, team and workspace settings.</div></li>
+        <li><span class="pill pill-member">member</span><div class="grow">Write and edit notes, share them with guests.</div></li>
+        <li><span class="pill pill-guest">guest</span><div class="grow">Read the notes shared with guests. Nothing else.</div></li>
+      </ul>
+    </section>
+  </main>
+</body>
+</html>

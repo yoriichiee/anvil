@@ -1,0 +1,22 @@
+{
+  "pr": 999, "title": "notebooks: sharing (FIXTURE)", "url": "https://github.com/acme/notes/pull/999",
+  "module": "notebooks", "lanes": ["ui", "app"], "author": "devlogin", "tester": "testerlogin",
+  "owner": "ownerlogin", "commit": "abc1234", "branch": "notebooks/sharing",
+  "issue": { "number": 17, "url": "https://github.com/acme/notes/issues/17" }, "review_note": "docs/reviews/notebooks-sharing.md",
+  "copilot": { "summary": ["Adds a shared notebook link for guests", "Members can share a notebook", "Autosave in the editor"],
+               "extras": ["Search box on the notes list"],
+               "security": ["shares route checks role on the server - SECRET DETAIL SHOULD NOT APPEAR"], "tips": ["Use a phone-size window for phone steps"] },
+  "focus": ["Autosave", "Guest access"],
+  "pages": [ { "page": "member/notes.html", "roles": ["member"], "why": "Expected: notes list" },
+             { "page": "admin/members.html", "roles": ["admin"], "why": "Expected: members list" } ],
+  "access": [ { "id": "r1", "name": "Guest cannot list members", "as": "guest", "method": "GET", "path": "members", "expect": [401, 403] } ],
+  "flags": [],
+  "manual": [
+    { "id": "m1", "area": "works", "lane": "app", "title": "Autosave survives a reload", "why": "People lose text if it fails",
+      "steps": ["Open a note", "Type, wait for Saved, reload"], "role": "member", "page": "member/editor.html", "good": "Text is still there", "needs": "any" },
+    { "id": "m2", "area": "phone", "lane": "ui", "title": "Notes list fits a phone", "why": "Many members use phones",
+      "steps": ["Open the notes list on a phone"], "role": "member", "page": "member/notes.html", "good": "No sideways scrolling, buttons readable", "needs": "phone" },
+    { "id": "m3", "area": "roles", "lane": "app", "title": "Admin can see shared notebooks", "why": "Core feature",
+      "steps": ["Sign in as admin", "Open members, look at Alex Doe"], "role": "admin", "page": "admin/members.html", "good": "Shared notebooks are listed", "needs": "laptop" }
+  ]
+}

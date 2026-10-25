@@ -1,0 +1,12 @@
+Anvil
+Copyright 2026 yoriichiee and Anvil contributors
+https://github.com/yoriichiee/anvil
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+Anvil installs and uses, without modifying or bundling them:
+- playwright-core (Apache License 2.0) - https://github.com/microsoft/playwright
+- axe-core (Mozilla Public License 2.0) - https://github.com/dequelabs/axe-core
+  axe-core is loaded unmodified from node_modules and injected into pages under test.
+
+The dashboard loads the Inter typeface from Google Fonts (SIL Open Font License 1.1).

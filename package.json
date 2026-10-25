@@ -1,0 +1,27 @@
+{
+  "name": "anvil-qa",
+  "version": "0.1.0",
+  "description": "Anvil - a local QA co-pilot for pull requests of any web app: reliable automatic checks, a guided manual checklist inside the app under test, and a report posted to GitHub. Works with Claude Code.",
+  "private": false,
+  "type": "module",
+  "license": "Apache-2.0",
+  "author": "yoriichiee and Anvil contributors",
+  "homepage": "https://github.com/yoriichiee/anvil#readme",
+  "repository": { "type": "git", "url": "git+https://github.com/yoriichiee/anvil.git" },
+  "bugs": { "url": "https://github.com/yoriichiee/anvil/issues" },
+  "keywords": ["qa", "testing", "pull-request", "playwright", "accessibility", "claude-code", "manual-testing"],
+  "engines": { "node": ">=20" },
+  "bin": {
+    "anvil-run": "src/run.mjs",
+    "anvil-server": "src/server.mjs"
+  },
+  "files": ["src/", "dashboard/", "schemas/", "skill/", "examples/", "docs/", "README.md", "LICENSE", "NOTICE"],
+  "scripts": {
+    "test": "node --test test/config.test.mjs test/report.test.mjs test/layout.test.mjs",
+    "check": "node scripts/check-syntax.mjs"
+  },
+  "dependencies": {
+    "axe-core": "4.14.0",
+    "playwright-core": "1.64.1"
+  }
+}

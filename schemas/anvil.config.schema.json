@@ -1,0 +1,132 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "anvil.config.schema.json",
+  "title": "anvil.config.json - per-project settings for Anvil",
+  "description": "Lives at the root of the repo under test. Every project-specific detail is here; the engine is generic. A missing optional section turns its checks into a clear 'skip'. Templates: {origin} {role} {page} {lane} {tester} {pr} {root} (repo root, or the temporary compare worktree for re-runs on main) {build} (<data_dir>/pr-<n>/build) {qa} (<data_dir>/pr-<n>) {filter} {flag} {tmp} (OS temp folder) {env:NAME} {env:NAME|default}. In list commands, items that become empty (like an unused {filter}) are dropped; a string command runs through the shell.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["name", "app", "roles"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "name": { "type": "string", "description": "Product name shown in Anvil and in messages, e.g. \"Acme Notes\"." },
+    "data_dir": { "type": "string", "default": ".qa", "description": "Per-PR data folder, relative to the repo root (git-ignore it): <data_dir>/pr-<n>/." },
+    "focus_doc": { "type": ["string", "null"], "description": "Repo path of a Markdown file with module focus notes; the skill reads it when writing manual checks." },
+    "github": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "repo": { "type": ["string", "null"], "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$", "description": "owner/name. Default: parsed from `git remote get-url origin`. Without it, CI (A4), the PR list and posting are skipped." },
+        "testing_label": { "type": "string", "default": "needs-testing", "description": "Label of PRs waiting for a tester (\"start anvil\" lists open PRs assigned to you with it)." }
+      }
+    },
+    "server": {
+      "type": "object", "additionalProperties": false,
+      "properties": { "port": { "type": "integer", "minimum": 1, "maximum": 65535, "default": 8795, "description": "Anvil's port on 127.0.0.1 (ANVIL_PORT overrides)." } }
+    },
+    "app": {
+      "type": "object", "additionalProperties": false,
+      "description": "The app under test, running locally.",
+      "properties": {
+        "origin": { "type": "string", "default": "http://127.0.0.1:3000", "description": "Where the app runs." },
+        "origin_env": { "type": ["string", "null"], "description": "Environment variable that may override origin." },
+        "start_command": { "type": ["string", "null"], "description": "How to start the app (shown to testers, used by the skill). May mention {build}." },
+        "start_env": { "type": "object", "additionalProperties": { "type": "string" }, "description": "Environment variables the skill sets when it starts the app (templates allowed, e.g. {build})." },
+        "health_path": { "type": "string", "default": "/", "description": "Path that answers < 500 when the app is up." },
+        "page_path": { "type": "string", "default": "/{page}", "description": "Path of a page; must contain {page}. Plan pages are the {page} part." },
+        "page_pattern": { "type": ["string", "null"], "description": "Regex every plan page must match (default: any safe relative path)." },
+        "page_example": { "type": ["string", "null"], "description": "Example page shown in hints, e.g. member/notes.html." },
+        "api_base": { "type": "string", "default": "/api/", "description": "Path prefix of API routes; plan access/flag paths are relative to it." },
+        "api_match": { "type": "string", "default": "/api/", "description": "Substring that marks a request as an API call (failed-call detection and the session log)." },
+        "api_context_path": { "type": ["string", "null"], "description": "Same-origin page opened before an API GET is sent (default: health_path)." },
+        "login_path": { "type": ["string", "null"], "description": "Dev sign-in path that sets a session for a role; must contain {role}, may contain {page} for a redirect, e.g. /dev/login/{role}?next={page}. Without a page, the query parameter holding {page} is dropped. Without login_path every role browses signed out." },
+        "reset_path": { "type": ["string", "null"], "description": "Path that resets the test data (GET). Without it the Reset button is hidden." },
+        "sample_names": { "type": ["string", "null"], "description": "Regex of leftover placeholder names; a page showing one gets a warning." }
+      }
+    },
+    "roles": {
+      "type": "object", "additionalProperties": false, "required": ["list"],
+      "properties": {
+        "list": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "pattern": "^[a-z][a-z0-9_-]{0,30}$", "not": { "const": "anon" } }, "description": "Roles a tester can sign in as. \"anon\" (signed out) is always available." },
+        "default": { "type": ["string", "null"], "description": "Role for a page whose folder maps to no role (default: the first role)." },
+        "folder_map": { "type": "object", "additionalProperties": { "type": "string" }, "description": "First folder of a page -> role, for pages listed without roles. A folder named like a role maps to it automatically." }
+      }
+    },
+    "build": {
+      "type": ["object", "null"], "additionalProperties": false, "required": ["command"],
+      "description": "Check A5. Absent: A5 is skipped.",
+      "properties": {
+        "name": { "type": "string", "default": "Build", "description": "Check title." },
+        "command": { "$ref": "#/$defs/command", "description": "Builds into {build} (never into a tracked folder)." },
+        "timeout_minutes": { "type": "number", "default": 10 },
+        "env": { "$ref": "#/$defs/env" },
+        "unset_env": { "$ref": "#/$defs/names" },
+        "detail_replace": { "type": "object", "additionalProperties": false, "required": ["pattern"], "properties": { "pattern": { "type": "string" }, "with": { "type": "string" } }, "description": "Regex replace applied to the last output line before it is shown." },
+        "manifest": { "type": ["string", "null"], "description": "File in the build output listing the pages (JSON). With it, a plan page missing from the build fails." },
+        "manifest_key": { "type": ["string", "null"], "description": "Key in the manifest that holds the page map (keys = pages). Default: the whole file." },
+        "app_dir_env": { "type": ["string", "null"], "description": "Environment variable that points the app at a build folder; when set, its manifest is used instead of {build}." },
+        "app_dir": { "type": ["string", "null"], "description": "Repo path of the app's default build folder (manifest fallback)." }
+      }
+    },
+    "tests": {
+      "type": ["object", "null"], "additionalProperties": false, "required": ["command"],
+      "description": "Checks A1 (suite), A2 (re-run failed files), A3 (failed files on the compare ref). Absent: A1 is skipped.",
+      "properties": {
+        "command": { "$ref": "#/$defs/command", "description": "Runs the suite. {root} is the folder it runs in (repo root, or the compare worktree)." },
+        "filter_args": { "$ref": "#/$defs/names", "description": "Extra arguments to run only one file/filter, e.g. [\"{filter}\"]. Needed for A2/A3 and --test-filter." },
+        "timeout_minutes": { "type": "number", "default": 40 },
+        "env": { "$ref": "#/$defs/env" },
+        "unset_env": { "$ref": "#/$defs/names" },
+        "summary_regex": { "type": ["string", "null"], "description": "Multi-line regex for the summary line with named groups total, failed, and optional secs and files. Absent: pass/fail by exit code only (no A2/A3)." },
+        "files_separator": { "type": "string", "default": ", ", "description": "Separator inside the files group." },
+        "file_section_end_regex": { "type": ["string", "null"], "description": "Regex that starts the next file's section in the output (to find a failed file's test names)." },
+        "fail_name_regex": { "type": ["string", "null"], "description": "Multi-line regex whose group 1 is a failed test's name inside a file's section." },
+        "ok_line_regex": { "type": ["string", "null"], "description": "Regex of an output line that reports one passed test (for the live '<n> tests so far' count)." },
+        "fail_line_regex": { "type": ["string", "null"], "description": "Regex of an output line that reports one failed test (live count)." },
+        "log_line_regex": { "type": ["string", "null"], "description": "Only output lines matching it are streamed to the live log (default: every line)." },
+        "files_dir": { "type": ["string", "null"], "description": "Repo path of the test files; a failed file missing on the compare ref is 'new in this PR'." },
+        "rerun_failed": { "type": "boolean", "default": true },
+        "compare_on_main": { "type": "boolean", "default": true },
+        "compare_ref": { "type": "string", "default": "origin/main", "description": "Local ref used for A3 (no fetch is done)." }
+      }
+    },
+    "flags": {
+      "type": ["object", "null"], "additionalProperties": false, "required": ["command"],
+      "description": "Checks F-<id>: switch a feature flag off and on with a CLI and watch the API follow. Absent: F checks are skipped.",
+      "properties": {
+        "command": { "$ref": "#/$defs/command", "description": "Base command of the flag tool." },
+        "on_args": { "$ref": "#/$defs/names", "default": ["--on={flag}"] },
+        "off_args": { "$ref": "#/$defs/names", "default": ["--off={flag}"] },
+        "list_args": { "$ref": "#/$defs/names", "default": [], "description": "Arguments that print the flags that are on (to restore them afterwards)." },
+        "list_regex": { "type": ["string", "null"], "description": "Multi-line regex; group 1 = space-separated flags that are on. Without it the previous state is not restored." },
+        "none_text": { "type": ["string", "null"], "description": "Group-1 text that means no flag is on." },
+        "requires": { "type": ["string", "null"], "description": "Repo path that must exist, else the F checks are skipped." },
+        "missing_detail": { "type": ["string", "null"], "description": "Skip detail shown when 'requires' is missing." },
+        "flag_pattern": { "type": ["string", "null"], "description": "Regex every plan flag name must match." },
+        "off_expect": { "type": "object", "additionalProperties": false, "required": ["status"], "properties": { "status": { "type": "integer" }, "code": { "type": "string", "description": "expected JSON error field" } }, "default": { "status": 404 } },
+        "env": { "$ref": "#/$defs/env" },
+        "unset_env": { "$ref": "#/$defs/names" }
+      }
+    },
+    "review": {
+      "type": "object", "additionalProperties": false,
+      "description": "How the report is posted and read.",
+      "properties": {
+        "lanes": { "type": "array", "minItems": 1, "items": { "type": "string" }, "default": ["app"], "description": "Review lanes; one PR comment per lane in the plan." },
+        "ui_lane": { "type": "string", "default": "ui", "description": "Lane that gets phone/laptop (layout, accessibility) issues." },
+        "default_lane": { "type": "string", "default": "app", "description": "Lane that gets every other auto-check issue." },
+        "pass_command": { "type": "string", "default": "/pass {lane}", "description": "First line of a passing comment." },
+        "fix_command": { "type": "string", "default": "/fix {lane}", "description": "Start of the first line of a fix request." },
+        "process_doc": { "type": ["string", "null"], "description": "Repo path of the team's testing process (for the skill)." },
+        "owner": { "type": ["string", "null"], "description": "GitHub login of the final reviewer when the plan has none." },
+        "chat_name": { "type": "string", "default": "team chat", "description": "Where testers paste the short note, e.g. Slack or Discord." },
+        "help_text": { "type": "string", "default": "Stuck? Ask in Claude Code." },
+        "signature": { "type": "string", "default": "Tested with Anvil · Claude for @{tester}", "description": "Last line of every comment and the chat note; must contain {tester}." },
+        "recheck_command": { "type": "string", "default": "anvil-run --pr {pr}", "description": "Shown in the fix brief so the developer can re-run the failed checks." }
+      }
+    }
+  },
+  "$defs": {
+    "command": { "oneOf": [{ "type": "string", "minLength": 1 }, { "type": "array", "minItems": 1, "items": { "type": "string" } }] },
+    "names": { "type": "array", "items": { "type": "string" } },
+    "env": { "type": "object", "additionalProperties": { "type": "string" }, "description": "Extra environment variables (templates allowed)." }
+  }
+}

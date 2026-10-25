@@ -1,0 +1,73 @@
+{
+  "$schema": "../schemas/anvil.config.schema.json",
+  "name": "Acme Notes",
+  "data_dir": ".qa",
+  "focus_doc": "docs/anvil-focus.md",
+  "github": { "repo": "acme/notes", "testing_label": "needs-testing" },
+  "server": { "port": 8795 },
+  "app": {
+    "origin": "http://127.0.0.1:4400",
+    "origin_env": "ACME_ORIGIN",
+    "start_command": "node server.mjs",
+    "start_env": { "ACME_APP_DIR": "{build}" },
+    "health_path": "/dev/",
+    "page_path": "/app/{page}",
+    "page_pattern": "^[a-z]+/[a-z0-9-]+\\.html$",
+    "page_example": "member/notes.html",
+    "api_base": "/api/",
+    "api_match": "/api/",
+    "login_path": "/dev/login/{role}?next={page}",
+    "reset_path": "/dev/reset",
+    "sample_names": "Lorem Ipsum|Placeholder Person|TODO name"
+  },
+  "roles": {
+    "list": ["admin", "member", "guest"],
+    "default": "member",
+    "folder_map": { "settings": "admin" }
+  },
+  "build": {
+    "name": "Build",
+    "command": ["node", "build.mjs", "--out={build}"],
+    "timeout_minutes": 5,
+    "manifest": "manifest.json",
+    "manifest_key": "pages",
+    "app_dir_env": "ACME_APP_DIR"
+  },
+  "tests": {
+    "command": ["node", "{root}/run-tests.mjs"],
+    "filter_args": ["{filter}"],
+    "timeout_minutes": 10,
+    "summary_regex": "^RESULT: (?<total>\\d+) tests, (?<failed>\\d+) failed, (?<secs>[\\d.]+) s(?: \\((?<files>.+)\\))?\\s*$",
+    "files_separator": ", ",
+    "file_section_end_regex": "\\n[a-z0-9_.-]+\\.test\\.mjs\\n",
+    "fail_name_regex": "^ {2}FAIL (.+)$",
+    "ok_line_regex": "^\\s+ok\\s",
+    "fail_line_regex": "^\\s+FAIL\\s",
+    "files_dir": "tests",
+    "compare_ref": "origin/main"
+  },
+  "flags": {
+    "command": ["node", "{root}/flags.mjs"],
+    "on_args": ["--on={flag}"],
+    "off_args": ["--off={flag}"],
+    "list_args": [],
+    "list_regex": "^flags on: (.*)$",
+    "none_text": "(none)",
+    "requires": "flags.mjs",
+    "flag_pattern": "^ff_[a-z0-9_]+$",
+    "off_expect": { "status": 404, "code": "not_enabled" }
+  },
+  "review": {
+    "lanes": ["ui", "app"],
+    "ui_lane": "ui",
+    "default_lane": "app",
+    "pass_command": "/pass {lane}",
+    "fix_command": "/fix {lane}",
+    "process_doc": "docs/qa-process.md",
+    "owner": "jordan-owner",
+    "chat_name": "Slack",
+    "help_text": "Stuck? Ask in Claude Code, or in #qa on Slack.",
+    "signature": "Tested with Anvil · Claude for @{tester}",
+    "recheck_command": "anvil-run --pr {pr}"
+  }
+}
