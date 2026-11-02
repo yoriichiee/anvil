@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
+  <title>Shared with me · Acme Notes (static snapshot)</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/css/app.css">
+  <link rel="stylesheet" href="assets/css/snapshot.css">
+</head>
+<body>
+  <aside class="snap" aria-label="About this page"><div class="snap-in"><a class="snap-brand" href="../" aria-label="Anvil home"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 4.5H22.5V9H19L16.5 13.5H19L21.5 19.5H6.5L9 13.5H12L10.5 9C7 9 3.8 7.8 1 5.6C3.3 4.9 5.6 4.5 8 4.5Z"/></svg>Anvil</a><b>STATIC SNAPSHOT</b><span>Signed in as a guest. Seed data, nothing saves.</span><a class="snap-back" href="./">About this snapshot</a></div></aside>
+  <header class="topbar" id="topbar"><div class="topbar-inner">
+    <a class="brand" href="shared.html"><span class="brand-mark" aria-hidden="true"></span><span>Acme Notes <small>Acme Inc</small></span></a>
+    <nav class="nav" aria-label="Main"><a href="shared.html" aria-current="page">Shared with me</a></nav>
+    <div class="user">
+      <div class="user-name">Jordan Kim<span>guest</span></div>
+      <span class="avatar u4 " aria-hidden="true">JK</span>
+      <a class="signout" href="./">Sign out</a>
+    </div></div></header>
+  <main class="wrap" id="main">
+    <section class="hero">
+      <div>
+        <h1>Shared with you</h1>
+        <p id="hero-text">Notes the Acme Inc team has shared with guests. You can read them here; only the team can edit them.</p>
+      </div>
+      <!-- DEMO BUG 2 (intentional): this image has no alt attribute (axe rule image-alt). The fix is alt="". -->
+      <img src="assets/img/shared-hero.svg" width="220" height="150">
+    </section>
+    <div id="content"><div class="shared-grid">
+      <article class="card shared-card">
+        <h2>Onboarding checklist</h2>
+        <div class="meta"><span class="avatar u3 sm" aria-hidden="true">PR</span><span>Priya Rao · Oct 23, 2026</span></div>
+        <div><span class="tag">onboarding</span><span class="tag">how-to</span></div>
+        <p class="excerpt">Day one: laptop, accounts, and a walk through the notes workspace. Week one: shadow two support calls and pair with a designer. Month one: own one small…</p>
+        <details><summary>Read the full note</summary><p class="full">Day one: laptop, accounts, and a walk through the notes workspace.
+Week one: shadow two support calls and pair with a designer.
+Month one: own one small improvement end to end.</p></details>
+      </article>
+      <article class="card shared-card">
+        <h2>Release notes 2.3</h2>
+        <div class="meta"><span class="avatar u2 sm" aria-hidden="true">SL</span><span>Sam Lee · Oct 22, 2026</span></div>
+        <div><span class="tag">release</span></div>
+        <p class="excerpt">New: pinned notes, faster search, and a cleaner editor toolbar. Fixed: long titles now wrap on small screens. Next: tags on notes (behind a flag while…</p>
+        <details><summary>Read the full note</summary><p class="full">New: pinned notes, faster search, and a cleaner editor toolbar.
+Fixed: long titles now wrap on small screens.
+Next: tags on notes (behind a flag while we test it).</p></details>
+      </article>
+      <article class="card shared-card">
+        <h2>Style guide for shared notes</h2>
+        <div class="meta"><span class="avatar u1 sm" aria-hidden="true">AD</span><span>Alex Doe · Oct 18, 2026</span></div>
+        <div><span class="tag">how-to</span><span class="tag">writing</span></div>
+        <p class="excerpt">Write the outcome first. Use short paragraphs. Name the owner and the date for every decision.</p>
+        <details><summary>Read the full note</summary><p class="full">Write the outcome first. Use short paragraphs. Name the owner and the date for every decision.</p></details>
+      </article>
+    </div></div>
+  </main>
+</body>
+</html>

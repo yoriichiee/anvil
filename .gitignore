@@ -6,3 +6,16 @@ Thumbs.db
 .vscode/
 .idea/
 *.tmp
+
+# Anvil run output, build artifacts
+.anvil/
+!examples/**/.anvil/
+examples/**/.anvil/runs/
+examples/**/.anvil/tmp/
+dist/
+infra/cdk.out/
+infra/node_modules/
+.validate-tmp.mjs
+
+# internal planning notes (kept local)
+docs/LAUNCH-PLAN.md

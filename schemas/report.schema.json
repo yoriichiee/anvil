@@ -1,0 +1,132 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://anvil.horvans.com/schemas/report.schema.json",
+  "title": "Anvil report.json",
+  "description": "Output of one `anvil scan` run (.anvil/runs/<ts>/report.json). schemaVersion \"1\" is frozen: additive optional fields only. Anvil never claims a target is 'secure'; notChecked lists what was not covered.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "scannedAt", "target", "mode", "checksRun", "findings", "humanChecks", "notChecked", "summary"],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "runId": { "type": "string", "pattern": "^[A-Za-z0-9._-]{1,80}$", "description": "Optional. Folder name under .anvil/runs/ (usually the timestamp)." },
+    "anvilVersion": { "type": "string", "maxLength": 40, "description": "Optional. Version of anvil-qa that produced the report." },
+    "scannedAt": { "type": "string", "format": "date-time" },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "value"],
+      "properties": {
+        "kind": { "enum": ["url", "dir", "zip", "github"] },
+        "value": { "type": "string", "minLength": 1, "maxLength": 2048, "description": "URL, local path, zip path or owner/repo. Never contains credentials." }
+      }
+    },
+    "mode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ai"],
+      "properties": {
+        "ai": { "enum": ["none", "claude-code", "codex", "byok", "credits"] }
+      }
+    },
+    "checksRun": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "name", "status", "durationMs"],
+        "properties": {
+          "id": { "$ref": "#/definitions/id" },
+          "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "status": { "enum": ["pass", "fail", "warn", "skip"] },
+          "durationMs": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "check", "severity", "title", "evidence", "why", "fix", "confidence"],
+        "properties": {
+          "id": { "$ref": "#/definitions/id" },
+          "check": { "$ref": "#/definitions/id", "description": "id of the checksRun entry that produced this finding." },
+          "severity": { "enum": ["critical", "high", "medium", "low", "info"] },
+          "title": { "type": "string", "minLength": 1, "maxLength": 300 },
+          "evidence": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "At least one piece of evidence. Secret values are always redacted before they reach this object.",
+            "minProperties": 1,
+            "properties": {
+              "shot": { "type": "string", "maxLength": 512, "description": "Path relative to the run folder, e.g. shots/notes-phone.png" },
+              "selector": { "type": "string", "maxLength": 1000 },
+              "file": { "type": "string", "maxLength": 1024, "description": "Path relative to the scanned target root." },
+              "line": { "type": "integer", "minimum": 1 },
+              "request": { "type": "string", "maxLength": 4000, "description": "e.g. 'GET /api/settings (role: member)'" },
+              "response": { "type": "string", "maxLength": 4000, "description": "e.g. '200 OK, 312 bytes'. Redacted." }
+            }
+          },
+          "why": { "type": "string", "minLength": 1, "maxLength": 4000 },
+          "fix": { "type": "string", "minLength": 1, "maxLength": 4000 },
+          "confidence": { "enum": ["proven", "likely", "unconfirmed"] }
+        }
+      }
+    },
+    "humanChecks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "prompt", "steps"],
+        "properties": {
+          "id": { "$ref": "#/definitions/id" },
+          "prompt": { "type": "string", "minLength": 1, "maxLength": 500 },
+          "steps": { "type": "array", "items": { "type": "string", "minLength": 1, "maxLength": 500 } },
+          "verdict": { "enum": ["works", "broken", "unsure"], "description": "Absent until a human answers." },
+          "note": { "type": "string", "maxLength": 4000 },
+          "shot": { "type": "string", "maxLength": 512 }
+        }
+      }
+    },
+    "notChecked": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Always non-empty: Anvil always lists what it did not check.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["what", "why"],
+        "properties": {
+          "what": { "type": "string", "minLength": 1, "maxLength": 500 },
+          "why": { "type": "string", "minLength": 1, "maxLength": 1000 }
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["score0to100", "counts"],
+      "properties": {
+        "score0to100": { "type": "integer", "minimum": 0, "maximum": 100, "description": "Launch-readiness score of what was checked. Not a security rating." },
+        "counts": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["critical", "high", "medium", "low", "info"],
+          "properties": {
+            "critical": { "type": "integer", "minimum": 0 },
+            "high": { "type": "integer", "minimum": 0 },
+            "medium": { "type": "integer", "minimum": 0 },
+            "low": { "type": "integer", "minimum": 0 },
+            "info": { "type": "integer", "minimum": 0 },
+            "humanPending": { "type": "integer", "minimum": 0 },
+            "humanBroken": { "type": "integer", "minimum": 0 }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._:-]{0,99}$" }
+  }
+}

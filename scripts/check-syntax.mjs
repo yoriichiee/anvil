@@ -8,7 +8,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const files = [];
 (function walk(d) {
   for (const e of fs.readdirSync(d, { withFileTypes: true })) {
-    if (e.name === 'node_modules' || e.name.startsWith('.')) continue;
+    if (e.name === 'node_modules' || e.name === 'cdk.out' || e.name === 'dist' || e.name.startsWith('.')) continue;
     const p = path.join(d, e.name);
     if (e.isDirectory()) walk(p);
     else if (/\.(mjs|js)$/.test(e.name)) files.push(p);

@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Install Anvil</title>
+<meta name="description" content="Install the Anvil CLI and MCP server on Mac, Linux or Windows, connect it to Claude Code or Codex, and run your first scan.">
+<link rel="canonical" href="https://anvil.horvans.com/install/">
+<meta name="theme-color" content="#f7f7f7">
+<meta name="color-scheme" content="light">
+<link rel="icon" href="../assets/landing/favicon.svg" type="image/svg+xml">
+<script src="../assets/landing/early.js"></script>
+<link rel="stylesheet" href="../assets/landing/landing.css">
+<link rel="stylesheet" href="../assets/css/pages.css">
+<script src="../assets/js/pages.js" defer></script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<svg class="sprite" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="i-anvil" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M8 4.5H22.5V9H19L16.5 13.5H19L21.5 19.5H6.5L9 13.5H12L10.5 9C7 9 3.8 7.8 1 5.6C3.3 4.9 5.6 4.5 8 4.5Z"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+  <symbol id="i-git" viewBox="0 0 24 24"><path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+</svg>
+
+<header class="nav" id="top">
+  <div class="nav-in">
+    <a class="brand" href="../" aria-label="Anvil home">
+      <svg class="brand-mark" width="22" height="22" aria-hidden="true" focusable="false"><use href="#i-anvil"/></svg>
+      <span>Anvil</span>
+    </a>
+    <nav class="nav-links" id="nav-links" aria-label="Main">
+      <a href="../#how">How it works</a>
+      <a href="../demo/">Demo</a>
+      <a href="../addons/">Add-ons</a>
+      <a href="./" aria-current="page">Install guide</a>
+      <a href="https://github.com/yoriichiee/anvil" rel="noopener"><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-git"/></svg>GitHub</a>
+    </nav>
+    <div class="nav-act">
+      <a class="btn btn-primary btn-sm" href="#step-install">Install</a>
+      <button class="icon-btn nav-toggle" type="button" aria-expanded="false" aria-controls="nav-links">
+        <svg class="icon" width="18" height="18" aria-hidden="true"><use href="#i-menu"/></svg>
+        <span class="sr-only">Menu</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="main" tabindex="-1">
+  <div class="page-head">
+    <div class="wrap">
+      <p class="eyebrow">Install guide · version 0.2.0</p>
+      <h1 class="page-h1">Install Anvil</h1>
+      <p class="lead">You need Node 20 or later, and Chrome or Edge. If neither browser is found, Anvil offers to download Chromium for you.</p>
+    </div>
+  </div>
+
+  <section class="sec sec-tight sec-white" aria-label="Steps">
+    <div class="wrap">
+      <div class="inst">
+
+        <div class="inst-row" id="step-install">
+          <h2><span class="inst-num">1</span>Install</h2>
+          <div class="stack">
+            <p class="mini-h">Mac or Linux</p>
+            <div class="cmd-box"><span class="cmd-prompt" aria-hidden="true">$</span><code class="cmd-text" id="cmd-mac">curl -fsSL https://anvil.horvans.com/install.sh | sh</code><button class="copy-btn" type="button" data-copy="cmd-mac" aria-label="Copy the Mac and Linux install command"><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-copy"/></svg><span class="copy-label">Copy</span></button></div>
+            <p class="mini-h">Windows (PowerShell)</p>
+            <div class="cmd-box"><span class="cmd-prompt" aria-hidden="true">PS&gt;</span><code class="cmd-text" id="cmd-win">irm https://anvil.horvans.com/install.ps1 | iex</code><button class="copy-btn" type="button" data-copy="cmd-win" aria-label="Copy the Windows install command"><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-copy"/></svg><span class="copy-label">Copy</span></button></div>
+            <p class="small">The installer downloads <a href="../dl/anvil-0.2.0.tgz">anvil-0.2.0.tgz</a>, checks it against <a href="../dl/SHA256SUMS">SHA256SUMS</a>, runs <code>npm i -g</code> on that local file, and copies the Anvil skill to <code>~/.claude/skills/anvil</code>. It never installs a "latest" version. Read <a href="../install.sh">install.sh</a> or <a href="../install.ps1">install.ps1</a> before you run it.</p>
+          </div>
+        </div>
+
+        <div class="inst-row">
+          <h2><span class="inst-num">2</span>Connect your agent</h2>
+          <div class="stack">
+            <p class="mini-h">Claude Code</p>
+            <div class="cmd-box"><span class="cmd-prompt" aria-hidden="true">$</span><code class="cmd-text" id="cmd-claude">claude mcp add anvil -- anvil-mcp</code><button class="copy-btn" type="button" data-copy="cmd-claude" aria-label="Copy the Claude Code command"><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-copy"/></svg><span class="copy-label">Copy</span></button></div>
+            <p class="mini-h">Codex</p>
+            <div class="cmd-box"><span class="cmd-prompt" aria-hidden="true">$</span><code class="cmd-text" id="cmd-codex">codex mcp add anvil -- anvil-mcp</code><button class="copy-btn" type="button" data-copy="cmd-codex" aria-label="Copy the Codex command"><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-copy"/></svg><span class="copy-label">Copy</span></button></div>
+            <p>Both start the binary you just installed. Then ask your agent: “Run Anvil on my app at localhost:3000 and walk me through the human checks.”</p>
+          </div>
+        </div>
+
+        <div class="inst-row">
+          <h2><span class="inst-num">3</span>Scan</h2>
+          <div class="stack">
+            <p class="mini-h">A running app on your machine</p>
+            <div class="cmd-box"><span class="cmd-prompt" aria-hidden="true">$</span><code class="cmd-text" id="cmd-url">anvil scan http://localhost:3000</code><button class="copy-btn" type="button" data-copy="cmd-url" aria-label="Copy the scan command for a running app"><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-copy"/></svg><span class="copy-label">Copy</span></button></div>
+            <p class="mini-h">A project folder</p>
+            <div class="cmd-box"><span class="cmd-prompt" aria-hidden="true">$</span><code class="cmd-text" id="cmd-dir">anvil scan ./my-app</code><button class="copy-btn" type="button" data-copy="cmd-dir" aria-label="Copy the scan command for a folder"><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-copy"/></svg><span class="copy-label">Copy</span></button></div>
+            <p class="small">Results go to <code>.anvil/runs/&lt;time&gt;/</code>: <code>report.json</code>, <code>report.html</code>, <code>fix-brief.md</code>, prompts for Lovable, Cursor and Claude, and screenshots.</p>
+          </div>
+        </div>
+
+        <div class="inst-row">
+          <h2><span class="inst-num inst-num-q">?</span>Just try it</h2>
+          <div class="stack">
+            <p class="mini-h">No install, one run</p>
+            <div class="cmd-box"><span class="cmd-prompt" aria-hidden="true">$</span><code class="cmd-text" id="cmd-quick">npx -y https://anvil.horvans.com/dl/anvil-0.2.0.tgz scan http://localhost:3000</code><button class="copy-btn" type="button" data-copy="cmd-quick" aria-label="Copy the quick try command"><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-copy"/></svg><span class="copy-label">Copy</span></button></div>
+          </div>
+        </div>
+
+        <div class="inst-row">
+          <h2><span class="inst-num inst-num-q">?</span>A site that isn't on your machine</h2>
+          <div class="stack">
+            <p>Anvil only scans a remote URL after you prove you own it. Without proof it scans <code>localhost</code> only. Run the command below, put the token it prints in <code>/.well-known/anvil.txt</code> on your site, and run it again.</p>
+            <div class="cmd-box"><span class="cmd-prompt" aria-hidden="true">$</span><code class="cmd-text" id="cmd-owner">anvil verify-owner https://your-app.example</code><button class="copy-btn" type="button" data-copy="cmd-owner" aria-label="Copy the verify-owner command"><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-copy"/></svg><span class="copy-label">Copy</span></button></div>
+          </div>
+        </div>
+
+        <div class="inst-row">
+          <h2><span class="inst-num inst-num-q">?</span>If something fails</h2>
+          <div class="stack">
+            <p>This prints your Node, browser and Anvil versions with keys, tokens and paths redacted, ready to paste into an issue.</p>
+            <div class="cmd-box"><span class="cmd-prompt" aria-hidden="true">$</span><code class="cmd-text" id="cmd-doctor">anvil doctor --share</code><button class="copy-btn" type="button" data-copy="cmd-doctor" aria-label="Copy the doctor command"><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-copy"/></svg><span class="copy-label">Copy</span></button></div>
+            <p class="small"><a href="https://github.com/yoriichiee/anvil/issues" rel="noopener">Open an issue on GitHub</a></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="note-box">
+        <p><strong><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-lock"/></svg> AI is optional.</strong> With no key, every check still runs and the fix brief is written from templates. With your own key, it is stored in your system keychain (or read from an environment variable), and repo text is redacted before it is sent. If redaction fails, nothing is sent.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="wrap foot-in">
+    <div class="foot-brand">
+      <a class="brand" href="../"><svg class="brand-mark" width="20" height="20" aria-hidden="true" focusable="false"><use href="#i-anvil"/></svg><span>Anvil</span></a>
+      <p class="muted small">Launch checks for AI-built apps.</p>
+    </div>
+    <nav class="foot-links" aria-label="Footer">
+      <a href="https://github.com/yoriichiee/anvil" rel="noopener">GitHub</a>
+      <a href="../demo/">Demo</a>
+      <a href="../addons/">Add-ons</a>
+      <a href="./">Install guide</a>
+      <a href="https://github.com/yoriichiee/anvil/blob/main/LICENSE" rel="noopener">Apache-2.0</a>
+    </nav>
+    <p class="foot-credit small muted">© 2026 Anvil contributors · by Horvans</p>
+  </div>
+</footer>
+
+<p class="sr-only" id="copy-status" aria-live="polite"></p>
+</body>
+</html>

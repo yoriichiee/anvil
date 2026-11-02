@@ -1,6 +1,6 @@
 # Acme Notes: the deliberate demo bugs
 
-Acme Notes ships with **exactly four bugs on purpose**, so Anvil has something real to find. Each one is marked
+Acme Notes ships with **exactly five bugs on purpose** (bug 5 is caught by `anvil scan`, the target mode), so Anvil has something real to find. Each one is marked
 `DEMO BUG <n>` in the code. Everything else should be clean: no other console errors, CSP blocks, failed API calls,
 sideways scrolling or missing labels. If Anvil reports anything that is not in this list, that is a real bug in the demo.
 Please open an issue for it.
@@ -13,6 +13,7 @@ There is also **one deliberately flaky test** (see the end of this file).
 | 2 | `guest/shared.html`: the hero `<img>` | axe `image-alt: 1` | `X-guest-shared.html` → `warn` | Add `alt=""` (the image is decorative) |
 | 3 | `GET /api/settings` in `server.mjs` | A member gets **200** instead of 403 | `R-r2` in `.anvil/plan.example.json` → `fail`, blocker | `if (s.role !== 'admin') return 403` |
 | 4 | `admin/settings.html` (`public/assets/js/settings.js`) | `console.error: settings: field "reply_to" is empty` on every load | `P-admin-settings.html-admin` → `fail` (not a blocker) | Show a hint, or nothing (the field is optional) |
+| 5 | `public/assets/js/billing.js` line 6 (details: `DEMO-BUG-5.md`) | `Stripe secret key (Anvil demo key) is shipped to every browser` (critical, value masked as `sk_anvildemo_[REDACTED ...]`). The key is a fake in Anvil's own demo-key format, so GitHub push protection does not block it | `secret-scan` (`anvil scan`, target mode) | Roll the key in Stripe; call Stripe from a server route that reads `STRIPE_SECRET_KEY` from the environment |
 
 Notes:
 - Bug 4 only shows while "Reply-to email" is empty, which is how the seed data starts. If you save an address, the

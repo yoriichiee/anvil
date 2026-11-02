@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="#d9d9d9"/></pattern>
+    <filter id="sh" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="18" stdDeviation="22" flood-color="#000" flood-opacity="0.18"/></filter>
+  </defs>
+  <style>
+    .t { font-family: Inter, 'Segoe UI', system-ui, -apple-system, Roboto, Arial, sans-serif; }
+    .m { font-family: ui-monospace, 'Cascadia Code', Consolas, monospace; }
+  </style>
+  <rect width="1200" height="630" fill="#f4f4f4"/>
+  <rect width="1200" height="630" fill="url(#dots)"/>
+
+  <!-- brand -->
+  <g transform="translate(72 64)">
+    <svg width="34" height="34" viewBox="0 0 24 24"><path fill="#0a0a0a" d="M8 4.5H22.5V9H19L16.5 13.5H19L21.5 19.5H6.5L9 13.5H12L10.5 9C7 9 3.8 7.8 1 5.6C3.3 4.9 5.6 4.5 8 4.5Z"/></svg>
+    <text x="44" y="26" class="t" font-size="28" font-weight="750" letter-spacing="-0.7" fill="#0a0a0a">Anvil</text>
+  </g>
+
+  <!-- headline -->
+  <text class="t" font-weight="760" fill="#0a0a0a" letter-spacing="-3.4">
+    <tspan x="68" y="214" font-size="74">Check your</tspan>
+    <tspan x="68" y="292" font-size="74">AI-built app</tspan>
+    <tspan x="68" y="370" font-size="74">before real</tspan>
+    <tspan x="68" y="448" font-size="74">users do.</tspan>
+  </text>
+  <text x="72" y="540" class="t" font-size="23" fill="#525252">Real checks with proof · guided human checks · a fix brief for your AI</text>
+  <text x="72" y="578" class="m" font-size="18" fill="#6b6b6b">anvil.horvans.com · open source</text>
+
+  <!-- report vignette -->
+  <g transform="translate(640 150)" filter="url(#sh)">
+    <rect width="488" height="300" rx="12" fill="#fff" stroke="#d4d4d4"/>
+  </g>
+  <g transform="translate(640 150)">
+    <path d="M0 12a12 12 0 0 1 12-12h464a12 12 0 0 1 12 12v32H0Z" fill="#f7f7f7"/>
+    <line x1="0" y1="44" x2="488" y2="44" stroke="#e5e5e5"/>
+    <rect x="8" y="8" width="168" height="36" rx="6" fill="#fff"/>
+    <rect x="16" y="8" width="152" height="2.5" fill="#0a0a0a"/>
+    <text x="24" y="31" class="t" font-size="14" font-weight="600" fill="#0a0a0a">report — acme-notes</text>
+    <text x="196" y="31" class="t" font-size="14" fill="#525252">fix-brief.md</text>
+
+    <text x="20" y="78" class="t" font-size="17" font-weight="650" fill="#0a0a0a">acme-notes</text>
+    <rect x="378" y="62" width="92" height="26" rx="4" fill="#fff" stroke="#a3a3a3"/>
+    <path d="M391 75l4 4 8-8" fill="none" stroke="#0a0a0a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="410" y="80" class="t" font-size="13" font-weight="650" fill="#0a0a0a">0 failing</text>
+    <line x1="0" y1="102" x2="488" y2="102" stroke="#e5e5e5"/>
+
+    <g class="t" font-size="15" font-weight="600" fill="#0a0a0a">
+      <g transform="translate(0 102)">
+        <circle cx="30" cy="27" r="9" fill="none" stroke="#0a0a0a" stroke-width="1.8"/><path d="M26 27l3 3 5-6" fill="none" stroke="#0a0a0a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        <text x="52" y="32">No console errors</text>
+        <rect x="414" y="15" width="54" height="24" rx="4" fill="#fff" stroke="#a3a3a3"/><text x="427" y="32" font-size="13">Pass</text>
+        <line x1="0" y1="54" x2="488" y2="54" stroke="#e5e5e5"/>
+      </g>
+      <g transform="translate(0 156)">
+        <circle cx="30" cy="27" r="9" fill="none" stroke="#0a0a0a" stroke-width="1.8"/><path d="M26 27l3 3 5-6" fill="none" stroke="#0a0a0a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        <text x="52" y="32">No secret keys in built JavaScript</text>
+        <rect x="414" y="15" width="54" height="24" rx="4" fill="#fff" stroke="#a3a3a3"/><text x="427" y="32" font-size="13">Pass</text>
+        <line x1="0" y1="54" x2="488" y2="54" stroke="#e5e5e5"/>
+      </g>
+      <g transform="translate(0 210)">
+        <circle cx="30" cy="27" r="9" fill="none" stroke="#0a0a0a" stroke-width="1.8"/><path d="M26 27l3 3 5-6" fill="none" stroke="#0a0a0a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        <text x="52" y="32">Supabase rules block strangers</text>
+        <rect x="414" y="15" width="54" height="24" rx="4" fill="#fff" stroke="#a3a3a3"/><text x="427" y="32" font-size="13">Pass</text>
+      </g>
+    </g>
+    <path d="M0 266h488v22a12 12 0 0 1-12 12H12a12 12 0 0 1-12-12Z" fill="#f7f7f7"/>
+    <line x1="0" y1="266" x2="488" y2="266" stroke="#e5e5e5"/>
+    <text x="16" y="288" class="t" font-size="12.5" fill="#525252">Scanned 2 Nov 2026 · <tspan font-weight="700" fill="#0a0a0a">38</tspan> checks · <tspan font-weight="700" fill="#0a0a0a">3</tspan> we couldn't check</text>
+  </g>
+
+  <!-- anvil resting on the window, with spent sparks -->
+  <g transform="translate(964 50)">
+    <svg width="124" height="124" viewBox="0 0 24 24"><path fill="#0a0a0a" d="M8 4.5H22.5V9H19L16.5 13.5H19L21.5 19.5H6.5L9 13.5H12L10.5 9C7 9 3.8 7.8 1 5.6C3.3 4.9 5.6 4.5 8 4.5Z"/></svg>
+  </g>
+  <g stroke="#0a0a0a" stroke-width="2.4" stroke-linecap="round">
+    <line x1="958" y1="132" x2="936" y2="124"/>
+    <line x1="962" y1="112" x2="946" y2="96"/>
+    <line x1="1096" y1="120" x2="1116" y2="106"/>
+    <line x1="1100" y1="140" x2="1124" y2="136"/>
+    <line x1="1032" y1="40" x2="1032" y2="22"/>
+  </g>
+</svg>

@@ -1,0 +1,110 @@
+{
+  "$schema": "https://anvil.horvans.com/schemas/anvil-addon.schema.json",
+  "id": "supabase-rls",
+  "name": "Supabase row-level security",
+  "version": "0.1.0",
+  "author": "Anvil contributors",
+  "license": "Apache-2.0",
+  "anvil": "^0.2",
+  "description": "Finds Supabase secret keys in your code, tries read-only anon GETs against common tables using the project URL and anon key found in your own code, and walks you through confirming RLS by hand.",
+  "tags": ["supabase", "database", "rls", "auth"],
+  "checks": [
+    {
+      "id": "service-role-jwt",
+      "kind": "secret-pattern",
+      "severity": "critical",
+      "title": "Supabase service_role key in the code",
+      "match": { "regex": "InJvbGUiOiJzZXJ2aWNlX3JvbGU|Jyb2xlIjoic2VydmljZV9yb2xlI|icm9sZSI6InNlcnZpY2Vfcm9sZS" },
+      "why": "This is a JWT whose role claim is service_role. That key skips row-level security completely: anyone who has it can read, change and delete every row in every table. If this file is shipped to browsers or committed to a repo, treat the key as leaked.",
+      "fix": "Rotate the service_role key (Supabase dashboard > Project Settings > API), use only the anon/publishable key in front-end code, and keep the service_role key in a server-side environment variable."
+    },
+    {
+      "id": "secret-api-key",
+      "kind": "secret-pattern",
+      "severity": "critical",
+      "title": "Supabase secret API key (sb_secret_) in the code",
+      "match": { "regex": "sb_secret_[A-Za-z0-9_-]{20,}" },
+      "why": "sb_secret_ keys have the same power as the old service_role key: they bypass row-level security.",
+      "fix": "Delete or rotate the key in Supabase (Project Settings > API Keys), use the sb_publishable_ key in the browser, and keep secret keys on the server only."
+    },
+    {
+      "id": "anon-schema-listing",
+      "kind": "rules-probe",
+      "severity": "low",
+      "title": "The anon key can list your exposed tables",
+      "match": { "path": "/rest/v1/", "method": "GET", "status": 200 },
+      "why": "With only the public anon key, the REST root describes every table and column exposed through the API. That is normal for Supabase, but it tells an attacker exactly which tables to try next. It does not by itself mean rows are readable.",
+      "fix": "Make sure every exposed table has RLS enabled with explicit policies, and move tables that should never be reached from the browser to a schema that is not exposed (Settings > API > Exposed schemas)."
+    },
+    {
+      "id": "anon-read-profiles",
+      "kind": "rules-probe",
+      "severity": "high",
+      "title": "Anyone can read rows from the profiles table",
+      "match": { "path": "/rest/v1/profiles?select=*&limit=1", "method": "GET", "status": 200, "regex": "^\\s*\\[\\s*\\{" },
+      "why": "A request with only the public anon key (no signed-in user) returned rows from profiles. If profiles hold emails, names or phone numbers, they are public.",
+      "fix": "Enable RLS on profiles and add a select policy such as using (auth.uid() = id). If some columns really are public, expose them through a view instead of the whole table."
+    },
+    {
+      "id": "anon-read-users",
+      "kind": "rules-probe",
+      "severity": "high",
+      "title": "Anyone can read rows from the users table",
+      "match": { "path": "/rest/v1/users?select=*&limit=1", "method": "GET", "status": 200, "regex": "^\\s*\\[\\s*\\{" },
+      "why": "A request with only the public anon key returned rows from a public users table. That usually means every user's details are readable by anyone.",
+      "fix": "Enable RLS on users and allow each person to select only their own row (auth.uid() = id)."
+    },
+    {
+      "id": "anon-read-orders",
+      "kind": "rules-probe",
+      "severity": "high",
+      "title": "Anyone can read rows from the orders table",
+      "match": { "path": "/rest/v1/orders?select=*&limit=1", "method": "GET", "status": 200, "regex": "^\\s*\\[\\s*\\{" },
+      "why": "A request with only the public anon key returned order rows. Orders usually contain customer names, addresses and amounts.",
+      "fix": "Enable RLS on orders and add a select policy that limits rows to their owner (for example auth.uid() = user_id)."
+    },
+    {
+      "id": "anon-read-messages",
+      "kind": "rules-probe",
+      "severity": "high",
+      "title": "Anyone can read rows from the messages table",
+      "match": { "path": "/rest/v1/messages?select=*&limit=1", "method": "GET", "status": 200, "regex": "^\\s*\\[\\s*\\{" },
+      "why": "A request with only the public anon key returned message rows. Private messages should never be readable without a signed-in participant.",
+      "fix": "Enable RLS on messages and add a select policy that checks the signed-in user is the sender or a recipient."
+    }
+  ],
+  "humanChecks": [
+    {
+      "id": "rls-enabled-everywhere",
+      "prompt": "Does every table in the Supabase Table Editor show RLS as enabled?",
+      "steps": [
+        "Open the Supabase dashboard for this project and go to Table Editor",
+        "Look at each table in the public schema",
+        "Answer Broken if any table shows 'RLS disabled' or 'Unrestricted'"
+      ],
+      "screenshot": true
+    },
+    {
+      "id": "other-user-rows",
+      "prompt": "Signed in as user A, can you see or change any of user B's rows?",
+      "steps": [
+        "Create two accounts, A and B (use two browsers or a private window)",
+        "As B, create something private (a note, an order, a message)",
+        "As A, look for it in the app, and try opening its direct link or id",
+        "Answer Broken if A can see or edit anything that belongs to B"
+      ],
+      "screenshot": true
+    },
+    {
+      "id": "private-storage-files",
+      "prompt": "Are uploaded private files really private?",
+      "steps": [
+        "Upload a private file as a signed-in user",
+        "Copy its URL",
+        "Open that URL in a private window where you are not signed in",
+        "Answer Broken if the file opens"
+      ],
+      "screenshot": true
+    }
+  ]
+}

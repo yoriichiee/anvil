@@ -1,0 +1,5 @@
+# Every pack and every tooling change needs a maintainer review before merge.
+*            @yoriichiee
+/scripts/    @yoriichiee
+/schema/     @yoriichiee
+/.github/    @yoriichiee

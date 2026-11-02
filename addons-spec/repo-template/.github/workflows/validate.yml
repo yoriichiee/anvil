@@ -1,0 +1,71 @@
+name: validate packs
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # Nothing is installed: the validator is zero-dependency and pack files are data, never code.
+
+      - name: Published versions are immutable (no edits, renames or deletes under packs/)
+        if: github.event_name == 'pull_request'
+        run: |
+          changed=$(git diff --diff-filter=MDR --name-only "origin/${{ github.base_ref }}...HEAD" -- packs/ || true)
+          if [ -n "$changed" ]; then
+            echo "::error::Published pack versions cannot be changed, renamed or deleted. Add a new version folder instead:"
+            echo "$changed"
+            exit 1
+          fi
+
+      - name: Flag tooling changes (need a CODEOWNERS review)
+        if: github.event_name == 'pull_request'
+        run: |
+          touched=$(git diff --name-only "origin/${{ github.base_ref }}...HEAD" -- scripts/ schema/ .github/ test/ package.json || true)
+          if [ -n "$touched" ]; then
+            echo "::warning::This PR changes registry tooling; a maintainer must review it:"
+            echo "$touched"
+          fi
+
+      - name: Validator and previous index from the base branch
+        run: |
+          tools="$RUNNER_TEMP/tools"; mkdir -p "$tools"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then ref="origin/${{ github.base_ref }}"; else ref="HEAD~1"; fi
+          # On PRs the rules come from the base branch, so a PR cannot weaken the checks it is judged by.
+          for f in build-index.mjs pack-validate.mjs; do
+            git show "$ref:scripts/$f" > "$tools/$f" 2>/dev/null || cp "scripts/$f" "$tools/$f"
+          done
+          if [ "${{ github.event_name }}" = "push" ]; then cp scripts/*.mjs "$tools/"; fi
+          git show "$ref:index.json" > "$RUNNER_TEMP/previous-index.json" 2>/dev/null || echo '{"schemaVersion":"1","packs":[]}' > "$RUNNER_TEMP/previous-index.json"
+
+      - name: Validate packs (schema, GET/HEAD only, same-site paths, ReDoS lint) and check index.json
+        run: node "$RUNNER_TEMP/tools/build-index.mjs" --root . --check --previous "$RUNNER_TEMP/previous-index.json"
+
+      - name: Tests
+        run: node --test test/build-index.test.mjs
+
+      - name: Upload registry files (index.json + packs/) for publishing
+        if: github.event_name == 'push'
+        uses: actions/upload-artifact@v4
+        with:
+          name: registry
+          path: |
+            index.json
+            packs/

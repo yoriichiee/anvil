@@ -1,5 +1,73 @@
 # Anvil
 
+**A launch-readiness checker for AI-built apps.** Point Anvil at your app (a local URL, a project folder or a .zip)
+and it runs real browser checks, a secret scan of your code and built bundle, and read-only Supabase / Firebase rules
+probes. It then walks you through the checks only a person can judge (**Works / Broken / Not sure**) and writes an
+evidence report plus a fix brief you can paste into Lovable, Cursor or Claude Code.
+
+- **Evidence, not vibes.** Every finding has a file and line, a screenshot or the request that proved it.
+- **Honest about its limits.** Anvil never calls an app "secure". Every report ends with a list of what was *not*
+  checked (git history, payments end to end, email delivery, load, write actions, overall security, ...).
+- **Drive it from your agent.** Claude Code and Codex use Anvil over MCP: scan, explain, ask you the human checks,
+  show the fix brief, and only edit code after you approve it (an agreed convention, not an enforced control).
+- **Your choice of AI.** No AI at all (templates), your own key (Anthropic / OpenAI / OpenRouter, stored in the OS
+  keychain), or a small capped number of free hosted credits. Secrets are redacted before anything reaches a model.
+- **Local first.** Scans run on your machine against apps you own. Remote URLs need an ownership token at
+  `/.well-known/anvil.txt`; localhost never does. GitHub mode (read-only static scan of a repo) is behind a flag.
+
+### Install
+
+```bash
+# macOS / Linux
+curl -fsSL https://anvil.horvans.com/install.sh | sh
+```
+```powershell
+# Windows (PowerShell)
+irm https://anvil.horvans.com/install.ps1 | iex
+```
+
+Both installers pin the version (0.2.0), verify the tarball's SHA256 against `/dl/SHA256SUMS`, run `npm i -g` on the
+local file and copy the `anvil` skills into `~/.claude/skills` and `~/.codex/skills`. Node 20+ and Chrome or Edge are
+needed. Quick try without installing: `npx -y https://anvil.horvans.com/dl/anvil-0.2.0.tgz scan http://localhost:3000`
+
+Connect your agent (once):
+
+```bash
+claude mcp add anvil -- anvil-mcp
+codex mcp add anvil -- anvil-mcp
+```
+
+Then say **"check my app before launch"** (or **"start anvil"**) in your project.
+
+### Use it from the terminal
+
+```bash
+anvil scan http://localhost:3000 --dir .     # a running app + its source
+anvil scan ./my-app                          # a folder (Anvil starts it from package.json / anvil.config.json)
+anvil scan site.zip                          # a zipped static build
+anvil report <runId> --severity=high         # findings
+anvil answer <runId> <itemId> works|broken|unsure --note "..."
+anvil brief <runId> --format=cursor          # md | lovable | cursor | claude
+anvil addon list --available ; anvil addon add supabase-rls
+anvil verify-owner https://myapp.com         # token for /.well-known/anvil.txt
+anvil doctor --share                         # environment report, redacted, safe to paste
+```
+
+Each run writes `.anvil/runs/<runId>/` with `report.json` (schema: `schemas/report.schema.json`), `report.html`,
+`fix-brief.md`, `prompts/{lovable,cursor,claude}.md` and `shots/`. Per-project settings (roles with sign-in links,
+access rules, excluded paths) go in `.anvil/scan.json`. `ANVIL_HOME` moves `~/.anvil` (run index, owner tokens,
+add-ons).
+
+Try it on the bundled demo: `node examples/acme-notes/server.mjs`, then
+`node src/cli.mjs scan http://127.0.0.1:4400 --dir examples/acme-notes`. It finds the five planted bugs
+(`examples/acme-notes/DEMO-BUGS.md`, `DEMO-BUG-5.md`). A recorded run is replayed at https://anvil.horvans.com/demo.
+
+---
+
+## Pull-request mode (older flow, `anvil --pr <n>`)
+
+The rest of this README describes the original per-pull-request flow, which still works behind `--pr`.
+
 **A local QA co-pilot for pull requests of any web app.** Anvil runs the checks a machine can answer reliably (tests,
 build, CI, every changed page on phone and laptop, role access, feature flags, accessibility basics), then guides a
 human tester through the checks only a person can do - with the app running *inside* Anvil - and posts one clear

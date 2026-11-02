@@ -1,0 +1,269 @@
+{
+  "schemaVersion": "1",
+  "runId": "2026-11-02T14-40-36-172Z",
+  "anvilVersion": "0.2.0",
+  "scannedAt": "2026-11-02T14:41:01.490Z",
+  "target": {
+    "kind": "url",
+    "value": "http://127.0.0.1:4400/"
+  },
+  "mode": {
+    "ai": "none"
+  },
+  "checksRun": [
+    {
+      "id": "page-load",
+      "name": "Page load and console errors",
+      "status": "warn",
+      "durationMs": 23564
+    },
+    {
+      "id": "overflow",
+      "name": "Sideways scroll at 390px and 1366px",
+      "status": "warn",
+      "durationMs": 1
+    },
+    {
+      "id": "axe",
+      "name": "Accessibility (axe-core)",
+      "status": "warn",
+      "durationMs": 1
+    },
+    {
+      "id": "role-access",
+      "name": "Role access (who can read what)",
+      "status": "fail",
+      "durationMs": 1541
+    },
+    {
+      "id": "secret-scan",
+      "name": "Secret scan (source + built bundle)",
+      "status": "fail",
+      "durationMs": 14
+    },
+    {
+      "id": "supabase-firebase",
+      "name": "Supabase / Firebase rules probe",
+      "status": "skip",
+      "durationMs": 1
+    }
+  ],
+  "findings": [
+    {
+      "id": "f-secret-stripe-demo-secret",
+      "check": "secret-scan",
+      "severity": "critical",
+      "title": "Stripe secret key (Anvil demo key) is shipped to every browser",
+      "evidence": {
+        "file": "public/assets/js/billing.js",
+        "response": "contains sk_anvildemo_[REDACTED 25 chars]",
+        "line": 6
+      },
+      "why": "Anyone who opens DevTools on your site can copy this Stripe secret key (Anvil demo key) and use it as you.",
+      "fix": "Roll the key in the Stripe dashboard now (treat it as leaked). Move every call that needs it to a server route that reads it from an environment variable; only the publishable key (pk_live_) belongs in the browser.",
+      "confidence": "proven"
+    },
+    {
+      "id": "f-access-member-settings",
+      "check": "role-access",
+      "severity": "high",
+      "title": "A member can read /api/settings (Member cannot read workspace settings)",
+      "evidence": {
+        "file": "server.mjs",
+        "request": "GET /api/settings (signed in as member)",
+        "response": "200, 120 bytes (expected 403)",
+        "line": 158
+      },
+      "why": "Your rule says a member must not read this, but the server answered with data. Hiding a page in the menu is not protection; anyone can send this request.",
+      "fix": "In the handler for /api/settings, check the signed-in role on the server and answer 403 for member. Add a test that a member gets 403.",
+      "confidence": "proven"
+    },
+    {
+      "id": "f-overflow-app-member-notes-phone",
+      "check": "overflow",
+      "severity": "medium",
+      "title": "/app/member/notes.html scrolls sideways on a phone (853px wide at 390px)",
+      "evidence": {
+        "shot": "shots/app-member-notes-member-phone.png",
+        "selector": "table.notes-table",
+        "file": "public/assets/css/app.css",
+        "line": 133
+      },
+      "why": "The element table.notes-table is wider than the 390px screen, so the whole page slides left and right. On phones this is usually the first thing people notice.",
+      "fix": "Let table.notes-table shrink or wrap (max-width: 100%), or put it in a container with overflow-x: auto, or switch to a stacked layout below 640px.",
+      "confidence": "proven"
+    },
+    {
+      "id": "f-console-app-admin-settings",
+      "check": "page-load",
+      "severity": "low",
+      "title": "console.error on /app/admin/settings.html (as admin): settings: field \"reply_to\" is empty",
+      "evidence": {
+        "shot": "shots/app-admin-settings-admin-laptop.png",
+        "file": "public/assets/js/settings.js",
+        "response": "console.error: settings: field \"reply_to\" is empty",
+        "line": 14
+      },
+      "why": "Errors in the console either mean something is broken or they hide real errors from you and your error tracker.",
+      "fix": "Fix the cause, or stop logging it as an error if it is expected.",
+      "confidence": "proven"
+    },
+    {
+      "id": "f-axe-image-alt-app-guest-shared",
+      "check": "axe",
+      "severity": "low",
+      "title": "Images must have alternative text (image-alt, 1 on /app/guest/shared.html)",
+      "evidence": {
+        "shot": "shots/app-guest-shared-guest-laptop.png",
+        "selector": "img",
+        "file": "public/app/guest/shared.html",
+        "response": "<img src=\"/assets/img/shared-hero.svg\" width=\"220\" height=\"150\">",
+        "line": 21
+      },
+      "why": "People using a screen reader or keyboard cannot use this part of the page as intended (axe rule image-alt).",
+      "fix": "Add alt text that says what the image shows, or alt=\"\" when it is only decoration.",
+      "confidence": "likely"
+    }
+  ],
+  "humanChecks": [
+    {
+      "id": "h-first-visit",
+      "prompt": "Does a first-time visitor understand what the app is for and where to start?",
+      "steps": [
+        "Open the app in a private window",
+        "Without clicking anything, say what the app does",
+        "Find the main button or link and follow it"
+      ]
+    },
+    {
+      "id": "h-signup-login",
+      "prompt": "Can a new person sign up, log out and log back in?",
+      "steps": [
+        "Open the app in a private window",
+        "Create an account with a new email",
+        "Log out",
+        "Log back in with the same email"
+      ]
+    },
+    {
+      "id": "h-password-reset",
+      "prompt": "Does \"forgot password\" actually let someone back in?",
+      "steps": [
+        "Log out",
+        "Use \"forgot password\" with a real inbox you control",
+        "Follow the email link and set a new password",
+        "Log in with the new password"
+      ]
+    },
+    {
+      "id": "h-other-user-data",
+      "prompt": "With two accounts, is each person kept out of the other one's data?",
+      "steps": [
+        "Create something private with account A",
+        "Log in as account B in another browser",
+        "Try to find or open A's item (lists, search, direct link)"
+      ]
+    },
+    {
+      "id": "h-checkout-test",
+      "prompt": "Does checkout work end to end in test mode, and does the app know you paid?",
+      "steps": [
+        "Switch payments to test mode",
+        "Buy the cheapest plan with a test card",
+        "Check the app shows the paid state",
+        "Check the payment shows up in the provider dashboard"
+      ]
+    },
+    {
+      "id": "h-payment-failure",
+      "prompt": "When a payment fails, does the user see a clear message and stay on the free plan?",
+      "steps": [
+        "Use a test card that is declined (e.g. 4000 0000 0000 0002 on Stripe)",
+        "Read the message",
+        "Check you did not get the paid features"
+      ]
+    },
+    {
+      "id": "h-form-errors",
+      "prompt": "Do forms explain mistakes and keep what you typed?",
+      "steps": [
+        "Submit the main form empty",
+        "Fill it with one wrong field",
+        "Check each error says what to fix and your other input is still there"
+      ]
+    },
+    {
+      "id": "h-phone-real",
+      "prompt": "On your own phone, can you use the main pages without scrolling sideways?",
+      "steps": [
+        "Open the app on a real phone",
+        "Visit the pages Anvil flagged",
+        "Try to read a full row and use the main buttons"
+      ]
+    },
+    {
+      "id": "h-key-rotated",
+      "prompt": "Have you rotated (replaced) every leaked key Anvil found?",
+      "steps": [
+        "Open each provider dashboard named in the report",
+        "Create a new key and delete the old one",
+        "Update your server environment and redeploy"
+      ]
+    },
+    {
+      "id": "h-access-member-api-team",
+      "prompt": "Should a member be able to read /api/team? Anvil got 200 with 635 bytes; only pages of more trusted roles use it.",
+      "steps": [
+        "Sign in as member",
+        "Open /api/team in the address bar (a GET request)",
+        "If you see data that this role should not see, answer Broken"
+      ]
+    }
+  ],
+  "notChecked": [
+    {
+      "what": "Secrets in git history",
+      "why": "Only the current files (and what the browser downloaded) were scanned, not older commits."
+    },
+    {
+      "what": "Supabase / Firebase rules probe",
+      "why": "No Supabase or Firebase config was found in the scanned code, so the read-only rules probe was skipped."
+    },
+    {
+      "what": "Payments end to end",
+      "why": "Anvil never makes real or test charges; payment findings come from static scans only."
+    },
+    {
+      "what": "Email delivery (sign-up, password reset)",
+      "why": "Anvil does not read inboxes."
+    },
+    {
+      "what": "Load, performance under traffic and rate limits",
+      "why": "Out of scope: Anvil runs one browser, not a load test."
+    },
+    {
+      "what": "Write actions (create, edit, delete) and anything behind a form",
+      "why": "Anvil only sends GET requests and never submits forms; the human checks cover these."
+    },
+    {
+      "what": "Server-side code paths not reachable from the pages crawled",
+      "why": "Only pages linked from the start page (per role) and configured access rules were exercised."
+    },
+    {
+      "what": "Overall security",
+      "why": "Passing these checks does not make an app secure. Anvil reports what it checked and found, nothing more."
+    }
+  ],
+  "summary": {
+    "score0to100": 44,
+    "counts": {
+      "critical": 1,
+      "high": 1,
+      "medium": 1,
+      "low": 2,
+      "info": 0,
+      "humanPending": 10,
+      "humanBroken": 0
+    }
+  }
+}
