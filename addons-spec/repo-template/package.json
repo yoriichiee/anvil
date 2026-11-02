@@ -1,0 +1,14 @@
+{
+  "name": "anvil-addons",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Community check packs for Anvil (declarative JSON, no code). Built into index.json for https://anvil.horvans.com/registry/index.json.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "build": "node scripts/build-index.mjs",
+    "check": "node scripts/build-index.mjs --check",
+    "test": "node --test test/build-index.test.mjs"
+  }
+}

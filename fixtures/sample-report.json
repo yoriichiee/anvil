@@ -1,0 +1,131 @@
+{
+  "schemaVersion": "1",
+  "runId": "2026-11-02T10-15-00Z",
+  "anvilVersion": "0.2.0",
+  "scannedAt": "2026-11-02T10:15:00.000Z",
+  "target": { "kind": "url", "value": "http://localhost:4173" },
+  "mode": { "ai": "claude-code" },
+  "checksRun": [
+    { "id": "page-load", "name": "Page load and console errors", "status": "fail", "durationMs": 4120 },
+    { "id": "overflow", "name": "Sideways scroll at 390px and 1366px", "status": "warn", "durationMs": 3380 },
+    { "id": "axe", "name": "Accessibility (axe-core)", "status": "warn", "durationMs": 2710 },
+    { "id": "role-access", "name": "Role access (guest / member / admin)", "status": "fail", "durationMs": 1560 },
+    { "id": "secret-scan", "name": "Secret scan (source + built bundle)", "status": "fail", "durationMs": 890 },
+    { "id": "supabase-firebase", "name": "Supabase / Firebase rules probe", "status": "skip", "durationMs": 0 }
+  ],
+  "findings": [
+    {
+      "id": "f-secret-stripe-demo-secret",
+      "check": "secret-scan",
+      "severity": "critical",
+      "title": "Stripe secret key (Anvil demo key) is shipped to every browser",
+      "evidence": {
+        "file": "public/assets/js/billing.js",
+        "line": 6,
+        "request": "GET /assets/js/billing.js",
+        "response": "200 OK, body contains sk_anvildemo_[REDACTED 25 chars] (also present in build/assets/js/billing.js)"
+      },
+      "why": "A secret key (sk_live_) lets anyone who opens DevTools create charges, issue refunds and read customer data on your Stripe account. Only publishable keys (pk_live_) belong in front-end code.",
+      "fix": "Roll the key in the Stripe dashboard now (treat it as leaked). Move any call that needs the secret key to a server route that reads it from an environment variable, and keep only the publishable key in the browser.",
+      "confidence": "proven"
+    },
+    {
+      "id": "f-role-settings-member",
+      "check": "role-access",
+      "severity": "high",
+      "title": "A member can read admin-only workspace settings",
+      "evidence": {
+        "file": "server.mjs",
+        "line": 161,
+        "request": "GET /api/settings (signed in as member)",
+        "response": "200 OK, {\"settings\":{...}} (expected 403)"
+      },
+      "why": "Settings are admin-only in the UI, but the API only refuses guests. Any member can read them with one request, so hiding the page is not protection.",
+      "fix": "In the /api/settings handler, refuse every role except admin: if (s.role !== 'admin') return 403. Add a test that a member gets 403.",
+      "confidence": "proven"
+    },
+    {
+      "id": "f-overflow-notes-phone",
+      "check": "overflow",
+      "severity": "medium",
+      "title": "Notes page scrolls sideways on a phone (853px wide at 390px)",
+      "evidence": {
+        "shot": "shots/member-notes-member-phone.png",
+        "selector": "table.notes-table",
+        "file": "public/assets/css/app.css",
+        "line": 134
+      },
+      "why": "The notes table is forced to min-width 820px with no wrapping and no scroll container, so the whole page slides left and right on phones. Most of your users will see this first.",
+      "fix": "Wrap the table in a div with overflow-x: auto, or switch to a card layout below 640px.",
+      "confidence": "proven"
+    },
+    {
+      "id": "f-axe-image-alt-shared",
+      "check": "axe",
+      "severity": "low",
+      "title": "Shared-note hero image has no alt text",
+      "evidence": {
+        "selector": "main > img.hero",
+        "file": "public/app/guest/shared.html",
+        "line": 19
+      },
+      "why": "Screen readers announce the file name instead of skipping the image (axe rule image-alt).",
+      "fix": "The image is decorative: add alt=\"\".",
+      "confidence": "likely"
+    },
+    {
+      "id": "f-console-settings-replyto",
+      "check": "page-load",
+      "severity": "low",
+      "title": "console.error on every load of admin settings",
+      "evidence": {
+        "shot": "shots/admin-settings-admin-laptop.png",
+        "file": "public/assets/js/settings.js",
+        "line": 11,
+        "response": "console.error: settings: field \"reply_to\" is empty"
+      },
+      "why": "An optional empty field is logged as an error. It is harmless today but hides real errors in your logs and error tracker.",
+      "fix": "Show a hint next to the field instead of logging, or log nothing (the field is optional).",
+      "confidence": "proven"
+    }
+  ],
+  "humanChecks": [
+    {
+      "id": "h-signup-login",
+      "prompt": "Can a new person sign up, log out and log back in?",
+      "steps": ["Open /app/ in a private window", "Create an account with a new email", "Log out", "Log back in with the same email"],
+      "verdict": "works",
+      "shot": "shots/human-h-signup-login.png"
+    },
+    {
+      "id": "h-create-note",
+      "prompt": "Does a note you create still exist after a reload?",
+      "steps": ["Sign in as a member", "Open Notes and create a note titled 'launch test'", "Reload the page"],
+      "verdict": "works"
+    },
+    {
+      "id": "h-share-link",
+      "prompt": "Does a shared link open for someone who is not signed in, without showing other notes?",
+      "steps": ["Open a note and click Share", "Copy the link", "Open it in a private window", "Check that only that one note is visible"],
+      "verdict": "unsure",
+      "note": "The note opens, but I could not tell if the sidebar count leaks how many notes exist."
+    },
+    {
+      "id": "h-phone-notes",
+      "prompt": "On your own phone, can you read and open notes without scrolling sideways?",
+      "steps": ["Open the app on a real phone", "Go to Notes", "Try to read a full row and open a note"]
+    }
+  ],
+  "notChecked": [
+    { "what": "Payments end to end", "why": "Anvil does not make real or test charges; the Stripe key finding comes from a static scan only." },
+    { "what": "Database rules (Supabase / Firebase)", "why": "No Supabase or Firebase config was found in the scanned code, so the read-only rules probe was skipped." },
+    { "what": "Email delivery (sign-up, password reset)", "why": "Anvil does not read inboxes." },
+    { "what": "Load, performance under traffic and rate limits", "why": "Out of scope: Anvil runs one browser, not a load test." },
+    { "what": "Server-side code paths not reachable from the pages crawled", "why": "Only routes linked from crawled pages and the role-access plan were exercised." },
+    { "what": "Overall security", "why": "Passing these checks does not make an app secure. Anvil reports what it checked and found, nothing more." }
+  ],
+  "summary": {
+    "score0to100": 42,
+    "counts": { "critical": 1, "high": 1, "medium": 1, "low": 2, "info": 0, "humanPending": 1, "humanBroken": 0 }
+  }
+}

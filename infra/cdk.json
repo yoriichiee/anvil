@@ -1,0 +1,13 @@
+{
+  "app": "npx tsx bin/anvil.ts",
+  "watch": { "include": ["bin/**", "lib/**"], "exclude": ["node_modules", "cdk.out"] },
+  "context": {
+    "anvil:region": "ap-southeast-2",
+    "anvil:domainName": "anvil.horvans.com",
+    "anvil:certificateArn": "",
+    "anvil:apiDir": "../api",
+    "@aws-cdk/aws-iam:minimizePolicies": true,
+    "@aws-cdk/core:enablePartitionLiterals": true,
+    "@aws-cdk/aws-cloudfront:defaultSecurityPolicyTLSv1.2_2021": true
+  }
+}

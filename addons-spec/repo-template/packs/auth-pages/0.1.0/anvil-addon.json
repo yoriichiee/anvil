@@ -1,0 +1,112 @@
+{
+  "$schema": "https://anvil.horvans.com/schemas/anvil-addon.schema.json",
+  "id": "auth-pages",
+  "name": "Auth pages",
+  "version": "0.1.0",
+  "author": "Anvil contributors",
+  "license": "Apache-2.0",
+  "anvil": "^0.2",
+  "description": "Checks that the login, signup and password-reset pages load with the right fields, that sign-in forms cannot put the password in the URL, and walks you through rate limiting, reset links and logout by hand.",
+  "tags": ["auth", "login", "signup", "passwords"],
+  "checks": [
+    {
+      "id": "login-page",
+      "kind": "page",
+      "severity": "medium",
+      "title": "Login page at /login does not load with a password field",
+      "match": { "path": "/login", "selector": "input[type=\"password\"]" },
+      "why": "People who come back to your app go to /login first. If it is missing, errors, or has no password field, they cannot get in. If your app signs in somewhere else (for example /signin or only with Google), ignore this.",
+      "fix": "Make /login (or a redirect from it) show the sign-in form, and check it loads without errors when signed out."
+    },
+    {
+      "id": "signup-page",
+      "kind": "page",
+      "severity": "medium",
+      "title": "Signup page at /signup does not load with a password field",
+      "match": { "path": "/signup", "selector": "input[type=\"password\"]" },
+      "why": "New users need to be able to create an account. A broken signup page loses every new visitor. If your app uses another URL (for example /register) or passwordless sign-up, ignore this.",
+      "fix": "Make /signup (or a redirect from it) show the sign-up form, and check it loads without errors when signed out."
+    },
+    {
+      "id": "reset-page",
+      "kind": "page",
+      "severity": "low",
+      "title": "Password reset page at /forgot-password does not load",
+      "match": { "path": "/forgot-password", "selector": "input[type=\"email\"], input[name*=\"email\" i]" },
+      "why": "Users who forget their password need a way back in; without one they leave or email you. If your reset page lives at another URL, ignore this and answer the reset-link human check.",
+      "fix": "Add a forgot-password page that asks for an email address and sends a one-time reset link."
+    },
+    {
+      "id": "login-password-in-url",
+      "kind": "dom",
+      "severity": "medium",
+      "title": "Login form could send the password in the URL",
+      "match": { "path": "/login", "selector": "form:has(input[type=\"password\"]):not([method=\"post\" i])" },
+      "why": "A form with a password field and no method=\"post\" is submitted as GET when JavaScript is slow, fails, or the handler forgets preventDefault. The password then lands in the address bar, browser history and server logs.",
+      "fix": "Add method=\"post\" to the form (keep your JavaScript handler), so a native submit never puts the password in the URL."
+    },
+    {
+      "id": "signup-password-in-url",
+      "kind": "dom",
+      "severity": "medium",
+      "title": "Signup form could send the password in the URL",
+      "match": { "path": "/signup", "selector": "form:has(input[type=\"password\"]):not([method=\"post\" i])" },
+      "why": "Same as the login form: without method=\"post\", a native submit puts the new password in the URL, history and logs.",
+      "fix": "Add method=\"post\" to the signup form."
+    },
+    {
+      "id": "login-autocomplete",
+      "kind": "dom",
+      "severity": "info",
+      "title": "Password field has no autocomplete hint",
+      "match": { "path": "/login", "selector": "input[type=\"password\"]:not([autocomplete])" },
+      "why": "Without autocomplete=\"current-password\", password managers fill and save less reliably, which nudges people towards weak, reused passwords.",
+      "fix": "Add autocomplete=\"current-password\" on the login password field and autocomplete=\"new-password\" on signup and reset."
+    }
+  ],
+  "humanChecks": [
+    {
+      "id": "login-rate-limit",
+      "prompt": "After 10 wrong passwords in a row, does the app slow you down, lock the account or ask for a captcha?",
+      "steps": [
+        "Open the login page for an account you own",
+        "Enter a wrong password 10 times in a row, quickly",
+        "Answer Works if you are slowed down, locked out for a while, or shown a captcha",
+        "Answer Broken if every attempt is accepted instantly with no limit"
+      ],
+      "screenshot": true
+    },
+    {
+      "id": "reset-link-once",
+      "prompt": "Does a password-reset link work only once and expire?",
+      "steps": [
+        "Request a password reset for an account you own",
+        "Use the link from the email to set a new password",
+        "Open the same link again",
+        "Answer Broken if it lets you set the password a second time"
+      ],
+      "screenshot": true
+    },
+    {
+      "id": "no-account-enumeration",
+      "prompt": "Do login and reset give the same message for an email that has no account?",
+      "steps": [
+        "On the reset page, enter an email that has an account, then one that does not",
+        "On the login page, try a wrong password for a real account, then any password for a made-up email",
+        "Answer Broken if the messages tell you which emails have accounts"
+      ],
+      "screenshot": false
+    },
+    {
+      "id": "logout-really-logs-out",
+      "prompt": "After logging out, are private pages really closed?",
+      "steps": [
+        "Sign in and open a private page (dashboard, settings)",
+        "Log out",
+        "Press the browser Back button, then reload the page",
+        "Answer Broken if the private page still shows your data after the reload"
+      ],
+      "screenshot": true
+    }
+  ]
+}

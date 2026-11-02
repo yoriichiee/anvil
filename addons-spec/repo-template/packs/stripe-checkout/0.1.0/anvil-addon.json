@@ -1,0 +1,103 @@
+{
+  "$schema": "https://anvil.horvans.com/schemas/anvil-addon.schema.json",
+  "id": "stripe-checkout",
+  "name": "Stripe Checkout",
+  "version": "0.1.0",
+  "author": "Anvil contributors",
+  "license": "Apache-2.0",
+  "anvil": "^0.2",
+  "description": "Finds Stripe secret keys and webhook secrets in your code, checks that the checkout success and cancel pages load, and walks you through a test-card payment, a declined card and a closed tab.",
+  "tags": ["stripe", "payments", "checkout", "secrets"],
+  "checks": [
+    {
+      "id": "live-secret-key",
+      "kind": "secret-pattern",
+      "severity": "critical",
+      "title": "Live Stripe secret key in the code",
+      "match": { "regex": "(?:sk|rk)_live_[0-9a-zA-Z]{20,}" },
+      "why": "A live secret (sk_live_) or restricted (rk_live_) key lets whoever has it create charges, issue refunds and read customer data on your Stripe account. If it is in front-end code, everyone who opens DevTools has it.",
+      "fix": "Roll the key in the Stripe dashboard now (Developers > API keys) and treat the old one as leaked. Call Stripe only from a server route that reads the key from an environment variable; the browser needs only the publishable key (pk_live_)."
+    },
+    {
+      "id": "test-secret-key",
+      "kind": "secret-pattern",
+      "severity": "medium",
+      "title": "Test-mode Stripe secret key in the code",
+      "match": { "regex": "(?:sk|rk)_test_[0-9a-zA-Z]{20,}" },
+      "why": "Test keys cannot move real money, but a leaked one lets anyone read and change your test data and webhooks, and it usually means the live key will end up in the same place.",
+      "fix": "Move the key into a server-side environment variable now, before you switch to live mode, and roll it in the Stripe dashboard."
+    },
+    {
+      "id": "webhook-secret",
+      "kind": "secret-pattern",
+      "severity": "high",
+      "title": "Stripe webhook signing secret in the code",
+      "match": { "regex": "whsec_[0-9a-zA-Z]{24,}" },
+      "why": "With the webhook signing secret, anyone can forge 'payment succeeded' events that your server will trust, and mark orders paid without paying.",
+      "fix": "Roll the signing secret for this endpoint (Developers > Webhooks) and read it from a server-side environment variable."
+    },
+    {
+      "id": "success-page",
+      "kind": "page",
+      "severity": "low",
+      "title": "Checkout success page at /success does not load",
+      "match": { "path": "/success" },
+      "why": "After paying, Stripe sends the customer to your success URL. If that page is missing or errors, people who just paid see a broken page and often pay twice or ask for a refund. If your app uses a different success URL, ignore this and answer the test-card human check instead.",
+      "fix": "Make sure the success_url you pass to Stripe Checkout points at a page that exists and loads without signing in again."
+    },
+    {
+      "id": "cancel-page",
+      "kind": "page",
+      "severity": "low",
+      "title": "Checkout cancel page at /cancel does not load",
+      "match": { "path": "/cancel" },
+      "why": "When a customer backs out of checkout, Stripe sends them to your cancel URL. A missing page here loses the sale. If your app uses a different cancel URL, ignore this.",
+      "fix": "Point cancel_url at a page that exists, ideally the cart or pricing page, so the customer can try again."
+    }
+  ],
+  "humanChecks": [
+    {
+      "id": "test-card-success",
+      "prompt": "In test mode, does a payment with the 4242 test card go through and unlock what was bought?",
+      "steps": [
+        "Make sure the app is using Stripe test keys",
+        "Start checkout and pay with card 4242 4242 4242 4242, any future expiry date and any CVC",
+        "Check that you land on the success page",
+        "Check that the purchase (plan, credits, order) is now active in the app",
+        "Check that the payment shows in the Stripe dashboard (test mode)"
+      ],
+      "screenshot": true
+    },
+    {
+      "id": "declined-card",
+      "prompt": "Does a declined card fail cleanly without unlocking anything?",
+      "steps": [
+        "Start checkout and pay with card 4000 0000 0000 0002 (always declined)",
+        "Check that Stripe shows a decline message",
+        "Go back to the app and confirm nothing was unlocked"
+      ],
+      "screenshot": true
+    },
+    {
+      "id": "closed-tab-webhook",
+      "prompt": "If you close the tab right after paying, does the order still become paid?",
+      "steps": [
+        "Start checkout with the 4242 test card",
+        "Close the tab as soon as you click Pay, before the success page loads",
+        "Sign back in to the app a minute later",
+        "Answer Broken if the purchase is not active (the app is trusting the success page instead of a webhook)"
+      ],
+      "screenshot": true
+    },
+    {
+      "id": "success-url-not-free",
+      "prompt": "Does opening the success page directly, without paying, unlock anything?",
+      "steps": [
+        "Sign in as a user who has not paid",
+        "Type the success page URL into the address bar (copy any session_id from an earlier test if the URL has one)",
+        "Answer Broken if the app now treats this user as paid"
+      ],
+      "screenshot": true
+    }
+  ]
+}

@@ -1,5 +1,19 @@
 # Anvil architecture and file contract
 
+> **New in 0.2: local / target mode (`anvil scan`).** The main entry point is now a target, not a pull request:
+> `anvil scan <url | folder | .zip> [--dir <source>]` (`src/cli.mjs` -> `src/scan.mjs`). `src/target.mjs` resolves the
+> target (localhost always; a remote URL only with an ownership token at `/.well-known/anvil.txt`), `src/source.mjs`
+> reads the project folder, and `src/checks/` runs page load + console errors, overflow at 390/1366 px, axe-core, role
+> access, a secret scan of source and served JS (`src/redact.mjs` patterns) and read-only Supabase / Firebase probes.
+> Installed add-on packs (`src/addons/`, declarative JSON) register extra checks; a page/dom/axe check whose page is
+> 404/410 is skipped as "feature not detected" unless the pack marks it `required`. Each run writes
+> `.anvil/runs/<runId>/` with `report.json` (`schemas/report.schema.json`), a self-contained `report.html` (dashboard
+> look), `fix-brief.md`, `prompts/{lovable,cursor,claude}.md` and `shots/`; every report lists what was not checked.
+> Agents drive the same engine over MCP (`src/mcp/server.mjs`, bin `anvil-mcp`; contract in `src/mcp/CLI-CONTRACT.md`).
+> AI is optional (none / BYOK / capped credits); text sent to a model is redacted first and nothing is sent if that
+> fails. GitHub mode (`api/`, static scans only) is behind a flag. The pull-request mode described below still works
+> behind `--pr` and is unchanged.
+
 Anvil is a local QA co-pilot for one pull request of a web app. A tester says **start anvil** in Claude Code (skill
 `skill/anvil/SKILL.md`). Claude prepares the repo, writes `plan.json`, starts the app under test and the Anvil server.
 From then on the tester works only in Anvil (`http://127.0.0.1:8795/anvil/`). Anvil runs only **reliable** automatic

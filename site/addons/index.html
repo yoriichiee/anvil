@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anvil add-ons</title>
+<meta name="description" content="Check packs for Anvil: declarative JSON checks for Supabase, Stripe, auth pages and more. No pack can run code.">
+<link rel="canonical" href="https://anvil.horvans.com/addons/">
+<meta name="theme-color" content="#f7f7f7">
+<meta name="color-scheme" content="light">
+<link rel="icon" href="../assets/landing/favicon.svg" type="image/svg+xml">
+<script src="../assets/landing/early.js"></script>
+<link rel="stylesheet" href="../assets/landing/landing.css">
+<link rel="stylesheet" href="../assets/css/pages.css">
+<script src="../assets/js/pages.js" defer></script>
+<script src="../assets/js/addons.js" defer></script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<svg class="sprite" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="i-anvil" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M8 4.5H22.5V9H19L16.5 13.5H19L21.5 19.5H6.5L9 13.5H12L10.5 9C7 9 3.8 7.8 1 5.6C3.3 4.9 5.6 4.5 8 4.5Z"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-q" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-git" viewBox="0 0 24 24"><path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+</svg>
+
+<header class="nav" id="top">
+  <div class="nav-in">
+    <a class="brand" href="../" aria-label="Anvil home">
+      <svg class="brand-mark" width="22" height="22" aria-hidden="true" focusable="false"><use href="#i-anvil"/></svg>
+      <span>Anvil</span>
+    </a>
+    <nav class="nav-links" id="nav-links" aria-label="Main">
+      <a href="../#how">How it works</a>
+      <a href="../demo/">Demo</a>
+      <a href="./" aria-current="page">Add-ons</a>
+      <a href="../install/">Install guide</a>
+      <a href="https://github.com/yoriichiee/anvil" rel="noopener"><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-git"/></svg>GitHub</a>
+    </nav>
+    <div class="nav-act">
+      <a class="btn btn-primary btn-sm" href="../install/">Install</a>
+      <button class="icon-btn nav-toggle" type="button" aria-expanded="false" aria-controls="nav-links">
+        <svg class="icon" width="18" height="18" aria-hidden="true"><use href="#i-menu"/></svg>
+        <span class="sr-only">Menu</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="main" tabindex="-1">
+  <div class="page-head">
+    <div class="wrap">
+      <p class="eyebrow">Add-on marketplace</p>
+      <h1 class="page-h1">Check packs</h1>
+      <p class="lead">A pack adds checks for a stack you use. Packs are plain JSON: text patterns, page and DOM checks, read-only GET and HEAD probes on your own site, and human checklists. A pack cannot run code. Every pack is reviewed in a pull request before it is listed, and a published version never changes.</p>
+    </div>
+  </div>
+
+  <section class="sec sec-tight" aria-label="Packs">
+    <div class="wrap">
+      <p class="reg-status" id="reg-status" aria-live="polite">Loading the registry…</p>
+      <ul class="packs-live" id="packs"></ul>
+    </div>
+  </section>
+
+  <section class="sec sec-tight sec-white" aria-labelledby="write-title">
+    <div class="wrap write-pack">
+      <div class="sec-head sec-head-sm">
+        <p class="eyebrow">Write a pack</p>
+        <h2 id="write-title" class="h2">Found a bug Anvil missed? Turn it into a check.</h2>
+      </div>
+      <div class="body">
+        <p>Each pack is one <code>anvil-addon.json</code> file. Its format is published as a JSON Schema, and CI checks every pull request: the schema, patterns that could hang the scanner, probes limited to GET and HEAD, and versions that never change once released.</p>
+        <p>A check that looks for a page or feature only runs when that page or feature is there. If it isn't, the report lists the check under “not checked” instead of failing it.</p>
+        <div class="row-btns">
+          <a class="btn btn-primary" href="https://github.com/yoriichiee/anvil-addons" rel="noopener">Packs repository <svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="wrap foot-in">
+    <div class="foot-brand">
+      <a class="brand" href="../"><svg class="brand-mark" width="20" height="20" aria-hidden="true" focusable="false"><use href="#i-anvil"/></svg><span>Anvil</span></a>
+      <p class="muted small">Launch checks for AI-built apps.</p>
+    </div>
+    <nav class="foot-links" aria-label="Footer">
+      <a href="https://github.com/yoriichiee/anvil" rel="noopener">GitHub</a>
+      <a href="../demo/">Demo</a>
+      <a href="./">Add-ons</a>
+      <a href="../install/">Install guide</a>
+      <a href="https://github.com/yoriichiee/anvil/blob/main/LICENSE" rel="noopener">Apache-2.0</a>
+    </nav>
+    <p class="foot-credit small muted">© 2026 Anvil contributors · by Horvans</p>
+  </div>
+</footer>
+
+<p class="sr-only" id="copy-status" aria-live="polite"></p>
+</body>
+</html>

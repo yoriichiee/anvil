@@ -1,27 +1,43 @@
 {
   "name": "anvil-qa",
-  "version": "0.1.0",
-  "description": "Anvil - a local QA co-pilot for pull requests of any web app: reliable automatic checks, a guided manual checklist inside the app under test, and a report posted to GitHub. Works with Claude Code.",
+  "version": "0.2.0",
+  "description": "Anvil - launch-readiness checker for AI-built apps: real browser checks, secret and rules scans, and guided human checks (Works / Broken / Not sure) that produce an evidence report and a fix brief. Drive it from Claude Code or Codex over MCP. Local or GitHub mode; bring your own key, capped free credits, or no AI at all. Never claims 'secure': every report lists what was not checked.",
   "private": false,
   "type": "module",
   "license": "Apache-2.0",
   "author": "yoriichiee and Anvil contributors",
-  "homepage": "https://github.com/yoriichiee/anvil#readme",
+  "homepage": "https://anvil.horvans.com",
   "repository": { "type": "git", "url": "git+https://github.com/yoriichiee/anvil.git" },
   "bugs": { "url": "https://github.com/yoriichiee/anvil/issues" },
-  "keywords": ["qa", "testing", "pull-request", "playwright", "accessibility", "claude-code", "manual-testing"],
+  "keywords": ["qa", "launch-readiness", "testing", "playwright", "accessibility", "secret-scan", "mcp", "claude-code", "codex", "vibe-coding"],
   "engines": { "node": ">=20" },
   "bin": {
+    "anvil": "src/cli.mjs",
+    "anvil-mcp": "src/mcp/server.mjs",
     "anvil-run": "src/run.mjs",
     "anvil-server": "src/server.mjs"
   },
-  "files": ["src/", "dashboard/", "schemas/", "skill/", "examples/", "docs/", "README.md", "LICENSE", "NOTICE"],
+  "files": ["src/", "!src/**/*.test.mjs", "dashboard/", "schemas/", "skill/", "examples/", "!examples/**/.qa/", "!examples/**/.anvil/runs/", "!examples/**/.anvil/tmp/", "docs/", "!docs/LAUNCH-PLAN.md", "README.md", "LICENSE", "NOTICE"],
   "scripts": {
-    "test": "node --test test/config.test.mjs test/report.test.mjs test/layout.test.mjs",
-    "check": "node scripts/check-syntax.mjs"
+    "test": "node --test test/*.test.mjs src/addons/addons.test.mjs",
+    "test:api": "node --test api/*.test.mjs",
+    "test:mcp": "node src/mcp/smoke.mjs --full",
+    "test:all": "npm test && npm run test:api && npm run test:mcp && npm run check && npm run validate:sample",
+    "check": "node scripts/check-syntax.mjs",
+    "validate:sample": "node fixtures/validate-sample.mjs",
+    "pack:dl": "node scripts/pack.mjs"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.2",
     "axe-core": "4.14.0",
-    "playwright-core": "1.64.1"
+    "playwright-core": "1.64.1",
+    "yauzl": "3.4.0",
+    "zod": "4.6.7"
+  },
+  "optionalDependencies": {
+    "@napi-rs/keyring": "2.1.2"
+  },
+  "devDependencies": {
+    "ajv": "8.20.0"
   }
 }

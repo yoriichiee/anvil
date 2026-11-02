@@ -1,0 +1,93 @@
+{
+  "schemaVersion": "1",
+  "registry": "https://github.com/yoriichiee/anvil-addons",
+  "packs": [
+    {
+      "id": "auth-pages",
+      "name": "Auth pages",
+      "description": "Checks that the login, signup and password-reset pages load with the right fields, that sign-in forms cannot put the password in the URL, and walks you through rate limiting, reset links and logout by hand.",
+      "author": "Anvil contributors",
+      "license": "Apache-2.0",
+      "tags": [
+        "auth",
+        "login",
+        "signup",
+        "passwords"
+      ],
+      "latest": "0.1.0",
+      "versions": [
+        {
+          "version": "0.1.0",
+          "anvil": "^0.2",
+          "path": "packs/auth-pages/0.1.0/anvil-addon.json",
+          "sha256": "558d0d5c0f8e767239964bb1e1b0c49f784e51daaeb4ecffbc8112ae4c9428da",
+          "size": 5709,
+          "kinds": [
+            "dom",
+            "page"
+          ],
+          "checks": 6,
+          "humanChecks": 4
+        }
+      ]
+    },
+    {
+      "id": "stripe-checkout",
+      "name": "Stripe Checkout",
+      "description": "Finds Stripe secret keys and webhook secrets in your code, checks that the checkout success and cancel pages load, and walks you through a test-card payment, a declined card and a closed tab.",
+      "author": "Anvil contributors",
+      "license": "Apache-2.0",
+      "tags": [
+        "stripe",
+        "payments",
+        "checkout",
+        "secrets"
+      ],
+      "latest": "0.1.0",
+      "versions": [
+        {
+          "version": "0.1.0",
+          "anvil": "^0.2",
+          "path": "packs/stripe-checkout/0.1.0/anvil-addon.json",
+          "sha256": "fbc2502e01f0338dd845e83fbf8d5ae913e3abf1f44bc693c1beb2d097bd0dd7",
+          "size": 5279,
+          "kinds": [
+            "page",
+            "secret-pattern"
+          ],
+          "checks": 5,
+          "humanChecks": 4
+        }
+      ]
+    },
+    {
+      "id": "supabase-rls",
+      "name": "Supabase row-level security",
+      "description": "Finds Supabase secret keys in your code, tries read-only anon GETs against common tables using the project URL and anon key found in your own code, and walks you through confirming RLS by hand.",
+      "author": "Anvil contributors",
+      "license": "Apache-2.0",
+      "tags": [
+        "supabase",
+        "database",
+        "rls",
+        "auth"
+      ],
+      "latest": "0.1.0",
+      "versions": [
+        {
+          "version": "0.1.0",
+          "anvil": "^0.2",
+          "path": "packs/supabase-rls/0.1.0/anvil-addon.json",
+          "sha256": "49c879a702eb62fb49304b722f8b37a35215d5fe216e6ae549ad47a98bdf08dd",
+          "size": 6063,
+          "kinds": [
+            "rules-probe",
+            "secret-pattern"
+          ],
+          "checks": 7,
+          "humanChecks": 3
+        }
+      ]
+    }
+  ]
+}

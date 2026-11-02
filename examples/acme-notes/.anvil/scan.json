@@ -1,0 +1,17 @@
+{
+  "start": "/",
+  "roles": [
+    { "name": "admin", "login": "/dev/login/admin" },
+    { "name": "member", "login": "/dev/login/member" },
+    { "name": "guest", "login": "/dev/login/guest" }
+  ],
+  "access": [
+    { "id": "guest-team", "name": "Guest cannot list the team", "as": "guest", "path": "/api/team", "expect": [403] },
+    { "id": "member-settings", "name": "Member cannot read workspace settings", "as": "member", "path": "/api/settings", "expect": [403] },
+    { "id": "guest-settings", "name": "Guest cannot read workspace settings", "as": "guest", "path": "/api/settings", "expect": [403] },
+    { "id": "anon-notes", "name": "Signed-out visitor cannot list notes", "as": "anon", "path": "/api/notes", "expect": [401] },
+    { "id": "guest-team-note", "name": "Guest cannot open a team-only note", "as": "guest", "path": "/api/notes/n1", "expect": [403, 404] }
+  ],
+  "exclude": ["^/dev/reset", "^/dev/logout"],
+  "maxPages": 6
+}

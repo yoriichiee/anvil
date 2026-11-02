@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
+  <title>Notes · Acme Notes (static snapshot)</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/css/app.css">
+  <link rel="stylesheet" href="assets/css/snapshot.css">
+</head>
+<body>
+  <aside class="snap" aria-label="About this page"><div class="snap-in"><a class="snap-brand" href="../" aria-label="Anvil home"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 4.5H22.5V9H19L16.5 13.5H19L21.5 19.5H6.5L9 13.5H12L10.5 9C7 9 3.8 7.8 1 5.6C3.3 4.9 5.6 4.5 8 4.5Z"/></svg>Anvil</a><b>STATIC SNAPSHOT</b><span>Signed in as a member. Seed data, nothing saves.</span><a class="snap-back" href="./">About this snapshot</a></div></aside>
+  <header class="topbar" id="topbar"><div class="topbar-inner">
+    <a class="brand" href="notes.html"><span class="brand-mark" aria-hidden="true"></span><span>Acme Notes <small>Acme Inc</small></span></a>
+    <nav class="nav" aria-label="Main"><a href="notes.html" aria-current="page">Notes</a><a href="./#why-static">New note</a></nav>
+    <div class="user">
+      <div class="user-name">Sam Lee<span>member</span></div>
+      <span class="avatar u2 " aria-hidden="true">SL</span>
+      <a class="signout" href="./">Sign out</a>
+    </div></div></header>
+  <main class="wrap" id="main">
+    <div class="page-head">
+      <div><h1>Team notes</h1><p id="sub">7 notes from your team, newest first.</p></div>
+      <a class="btn" href="./#why-static">New note</a>
+    </div>
+    <div id="tagbar" class="tagbar" hidden></div>
+    <!-- DEMO BUG 1 (intentional): .notes-table has min-width 820px and no scroll container, so the page scrolls sideways on phones. -->
+    <div id="content"><div class="card table-card">
+    <table class="notes-table">
+      <caption class="sr-only">Team notes</caption>
+      <thead><tr><th scope="col">Title</th><th scope="col">Owner</th><th scope="col">Visibility</th><th scope="col">Last updated</th><th scope="col" class="num">Words</th></tr></thead>
+      <tbody>
+        <tr><td class="t"><a href="./#why-static">Q4 planning kickoff</a></td><td>Alex Doe</td><td><span class="pill">Team only</span></td><td>Oct 24, 2026</td><td class="num">36</td></tr>
+        <tr><td class="t"><a href="./#why-static">Onboarding checklist</a></td><td>Priya Rao</td><td><span class="pill pill-shared">Team + guests</span></td><td>Oct 23, 2026</td><td class="num">29</td></tr>
+        <tr><td class="t"><a href="./#why-static">Release notes 2.3</a></td><td>Sam Lee</td><td><span class="pill pill-shared">Team + guests</span></td><td>Oct 22, 2026</td><td class="num">27</td></tr>
+        <tr><td class="t"><a href="./#why-static">Design review: settings page</a></td><td>Sam Lee</td><td><span class="pill">Team only</span></td><td>Oct 21, 2026</td><td class="num">17</td></tr>
+        <tr><td class="t"><a href="./#why-static">Support rotation for November</a></td><td>Priya Rao</td><td><span class="pill">Team only</span></td><td>Oct 20, 2026</td><td class="num">22</td></tr>
+        <tr><td class="t"><a href="./#why-static">Style guide for shared notes</a></td><td>Alex Doe</td><td><span class="pill pill-shared">Team + guests</span></td><td>Oct 18, 2026</td><td class="num">16</td></tr>
+        <tr><td class="t"><a href="./#why-static">Team offsite ideas</a></td><td>Sam Lee</td><td><span class="pill">Team only</span></td><td>Oct 15, 2026</td><td class="num">18</td></tr>
+      </tbody>
+    </table></div></div>
+  </main>
+</body>
+</html>

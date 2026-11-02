@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anvil demo: a recorded run</title>
+<meta name="description" content="Replay a recorded Anvil run on a buggy notes app: the checks, the findings with evidence, the human checks you can answer, the score and the fix brief.">
+<link rel="canonical" href="https://anvil.horvans.com/demo/">
+<meta name="theme-color" content="#f7f7f7">
+<meta name="color-scheme" content="light">
+<link rel="icon" href="../assets/landing/favicon.svg" type="image/svg+xml">
+<script src="../assets/landing/early.js"></script>
+<link rel="stylesheet" href="../assets/landing/landing.css">
+<link rel="stylesheet" href="../assets/css/pages.css">
+<script src="../assets/landing/vendor/gsap.min.js" defer></script>
+<script src="../assets/landing/vendor/ScrollTrigger.min.js" defer></script>
+<script src="../assets/js/pages.js" defer></script>
+<script src="../assets/js/demo.js" defer></script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<svg class="sprite" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="i-anvil" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M8 4.5H22.5V9H19L16.5 13.5H19L21.5 19.5H6.5L9 13.5H12L10.5 9C7 9 3.8 7.8 1 5.6C3.3 4.9 5.6 4.5 8 4.5Z"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-q" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></symbol>
+  <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></symbol>
+  <symbol id="i-loop" viewBox="0 0 24 24"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/></symbol>
+  <symbol id="i-git" viewBox="0 0 24 24"><path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+</svg>
+
+<header class="nav" id="top">
+  <div class="nav-in">
+    <a class="brand" href="../" aria-label="Anvil home">
+      <svg class="brand-mark" width="22" height="22" aria-hidden="true" focusable="false"><use href="#i-anvil"/></svg>
+      <span>Anvil</span>
+    </a>
+    <nav class="nav-links" id="nav-links" aria-label="Main">
+      <a href="../#how">How it works</a>
+      <a href="./" aria-current="page">Demo</a>
+      <a href="../addons/">Add-ons</a>
+      <a href="../install/">Install guide</a>
+      <a href="https://github.com/yoriichiee/anvil" rel="noopener"><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-git"/></svg>GitHub</a>
+    </nav>
+    <div class="nav-act">
+      <a class="btn btn-primary btn-sm" href="../install/">Install</a>
+      <button class="icon-btn nav-toggle" type="button" aria-expanded="false" aria-controls="nav-links">
+        <svg class="icon" width="18" height="18" aria-hidden="true"><use href="#i-menu"/></svg>
+        <span class="sr-only">Menu</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="main" tabindex="-1">
+  <div class="page-head">
+    <div class="wrap">
+      <p class="eyebrow" id="rec-label">Recorded run</p>
+      <h1 class="page-h1">Watch Anvil check a buggy app.</h1>
+      <p class="lead">This is a replay of a real run on <a href="../demo-app/">Acme Notes</a>, a small notes app with bugs left in on purpose. Nothing is scanned live from this page. When the checks finish, it's your turn: answer the human checks and watch the score and the fix brief change.</p>
+      <dl class="run-meta" id="run-meta" aria-label="About this run"></dl>
+      <div class="page-ctas">
+        <button class="btn btn-primary btn-lg" type="button" id="replay"><svg class="icon" width="16" height="16" aria-hidden="true"><use href="#i-loop"/></svg>Replay the run</button>
+        <a class="btn btn-secondary btn-lg" href="#human">Skip to your turn</a>
+      </div>
+    </div>
+  </div>
+
+  <p class="wrap load-err" id="load-err" role="alert" hidden></p>
+
+  <section class="sec sec-tight" aria-labelledby="checks-title">
+    <div class="wrap">
+      <div class="sec-head sec-head-sm">
+        <p class="eyebrow">Step 1 · machine checks</p>
+        <h2 id="checks-title" class="h2">What ran, and how long it took.</h2>
+      </div>
+      <div class="win win-dark tl-win">
+        <div class="win-tabs win-tabs-dark" aria-hidden="true"><span class="win-tab is-active">anvil scan</span></div>
+        <ol class="tl" id="timeline" aria-describedby="tl-total"></ol>
+        <div class="win-status"><span id="tl-total" aria-live="polite"></span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec sec-tight sec-white" aria-labelledby="findings-title">
+    <div class="wrap">
+      <div class="sec-head sec-head-sm">
+        <p class="eyebrow">Step 2 · findings</p>
+        <h2 id="findings-title" class="h2">What it found, with the evidence.</h2>
+        <p class="lead">Most serious first. Secret values are redacted in the report itself, so nothing here is a live key.</p>
+      </div>
+      <div class="fds" id="findings"></div>
+    </div>
+  </section>
+
+  <section class="sec sec-tight" id="human" aria-labelledby="human-title">
+    <div class="wrap">
+      <div class="sec-head sec-head-sm">
+        <p class="eyebrow">Step 3 · your turn</p>
+        <h2 id="human-title" class="h2">Human checks. Pick an answer.</h2>
+        <p class="lead" id="human-lead">Answer them the way a tester would. The score and the fix brief below update as you go.</p>
+      </div>
+      <div class="hcs" id="humans"></div>
+    </div>
+  </section>
+
+  <section class="sec sec-tight sec-white" id="result" aria-labelledby="result-title">
+    <div class="wrap">
+      <div class="sec-head sec-head-sm">
+        <p class="eyebrow">Step 4 · the result</p>
+        <h2 id="result-title" class="h2">Score, verdict and fix brief.</h2>
+      </div>
+      <div class="result">
+        <div class="score-box">
+          <p class="mini-h">Launch score</p>
+          <p class="score-n" aria-live="polite"><span id="score">–</span><small>/ 100</small></p>
+          <p class="score-why" id="score-why"></p>
+          <p class="verdict" id="verdict"></p>
+          <ul class="counts" id="counts" aria-label="Counts"></ul>
+          <p class="score-fine">A score sums up what was checked. It is not a security rating.</p>
+        </div>
+        <div class="win win-dark brief-win">
+          <div class="win-tabs win-tabs-dark" role="tablist" aria-label="Fix brief format">
+            <button class="win-tab" role="tab" type="button" id="tab-md" aria-controls="brief-panel" aria-selected="true" data-fmt="md">fix-brief.md</button>
+            <button class="win-tab" role="tab" type="button" id="tab-lovable" aria-controls="brief-panel" aria-selected="false" tabindex="-1" data-fmt="lovable">Lovable</button>
+            <button class="win-tab" role="tab" type="button" id="tab-cursor" aria-controls="brief-panel" aria-selected="false" tabindex="-1" data-fmt="cursor">Cursor</button>
+            <button class="win-tab" role="tab" type="button" id="tab-claude" aria-controls="brief-panel" aria-selected="false" tabindex="-1" data-fmt="claude">Claude Code</button>
+          </div>
+          <div class="brief-panel" id="brief-panel" role="tabpanel" aria-labelledby="tab-md" tabindex="0">
+            <pre id="brief-out"></pre>
+          </div>
+          <div class="brief-actions">
+            <button class="copy-btn" type="button" data-copy="brief-out"><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-copy"/></svg><span class="copy-label">Copy this brief</span></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec sec-tight" aria-labelledby="nc-title">
+    <div class="wrap">
+      <div class="sec-head sec-head-sm">
+        <p class="eyebrow">Always in the report</p>
+        <h2 id="nc-title" class="h2">What this run did not check.</h2>
+      </div>
+      <div class="card card-dashed nc-list">
+        <ul class="ticks ticks-q" id="not-checked"></ul>
+      </div>
+      <div class="page-ctas page-ctas-end">
+        <a class="btn btn-primary btn-lg" href="../install/">Run it on your app <svg class="icon" width="16" height="16" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+        <a class="btn btn-secondary btn-lg" href="../demo-app/">Look at the buggy app</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<dialog class="shot-dlg" id="shot-dlg" aria-labelledby="shot-dlg-t">
+  <div class="shot-dlg-top"><p id="shot-dlg-t"></p><button class="btn btn-secondary btn-sm" type="button" id="shot-close">Close</button></div>
+  <img id="shot-dlg-img" alt="">
+</dialog>
+
+<footer class="foot">
+  <div class="wrap foot-in">
+    <div class="foot-brand">
+      <a class="brand" href="../"><svg class="brand-mark" width="20" height="20" aria-hidden="true" focusable="false"><use href="#i-anvil"/></svg><span>Anvil</span></a>
+      <p class="muted small">Launch checks for AI-built apps.</p>
+    </div>
+    <nav class="foot-links" aria-label="Footer">
+      <a href="https://github.com/yoriichiee/anvil" rel="noopener">GitHub</a>
+      <a href="./">Demo</a>
+      <a href="../addons/">Add-ons</a>
+      <a href="../install/">Install guide</a>
+      <a href="https://github.com/yoriichiee/anvil/blob/main/LICENSE" rel="noopener">Apache-2.0</a>
+    </nav>
+    <p class="foot-credit small muted">© 2026 Anvil contributors · by Horvans</p>
+  </div>
+</footer>
+
+<p class="sr-only" id="copy-status" aria-live="polite"></p>
+</body>
+</html>

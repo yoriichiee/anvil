@@ -1,0 +1,81 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://anvil.horvans.com/schemas/anvil-addon.schema.json",
+  "title": "Anvil add-on pack (anvil-addon.json)",
+  "description": "Declarative check pack. No code runs: every check is data interpreted by the Anvil engine. HTTP probes are GET/HEAD only. ReDoS linting of regexes is done by CI (addons-spec), not by this schema.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "name", "version", "author", "license", "anvil", "description", "tags", "checks"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{1,63}$" },
+    "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+    "version": { "type": "string", "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(-[0-9A-Za-z.-]+)?$" },
+    "author": { "type": "string", "minLength": 1, "maxLength": 120 },
+    "license": { "type": "string", "minLength": 1, "maxLength": 60, "description": "SPDX identifier." },
+    "anvil": { "type": "string", "pattern": "^[\\^~>=<]*\\d+(\\.\\d+){0,2}$", "description": "Compatible Anvil range, e.g. ^0.2" },
+    "description": { "type": "string", "minLength": 1, "maxLength": 500 },
+    "tags": { "type": "array", "maxItems": 12, "uniqueItems": true, "items": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,31}$" } },
+    "checks": {
+      "type": "array",
+      "maxItems": 50,
+      "items": { "$ref": "#/definitions/check" }
+    },
+    "humanChecks": {
+      "type": "array",
+      "maxItems": 30,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "prompt", "steps"],
+        "properties": {
+          "id": { "$ref": "#/definitions/localId" },
+          "prompt": { "type": "string", "minLength": 1, "maxLength": 500 },
+          "steps": { "type": "array", "minItems": 1, "maxItems": 20, "items": { "type": "string", "minLength": 1, "maxLength": 500 } },
+          "screenshot": { "type": "boolean", "default": true }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "localId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,63}$" },
+    "regex": { "type": "string", "minLength": 1, "maxLength": 500 },
+    "check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "severity", "title", "match", "why", "fix"],
+      "properties": {
+        "id": { "$ref": "#/definitions/localId" },
+        "kind": { "enum": ["page", "dom", "axe", "secret-pattern", "rules-probe", "http"] },
+        "severity": { "enum": ["critical", "high", "medium", "low", "info"] },
+        "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "match": {
+          "type": "object",
+          "additionalProperties": false,
+          "minProperties": 1,
+          "properties": {
+            "path": { "type": "string", "pattern": "^/[^\\s]{0,500}$", "description": "Same-origin path only (no scheme/host): probes never leave the target." },
+            "selector": { "type": "string", "minLength": 1, "maxLength": 500 },
+            "regex": { "$ref": "#/definitions/regex" },
+            "status": {
+              "oneOf": [
+                { "type": "integer", "minimum": 100, "maximum": 599 },
+                { "type": "array", "minItems": 1, "maxItems": 10, "items": { "type": "integer", "minimum": 100, "maximum": 599 } }
+              ]
+            },
+            "method": { "enum": ["GET", "HEAD"], "default": "GET", "description": "Only for kind http / rules-probe. Nothing that changes state." }
+          }
+        },
+        "why": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "fix": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "required": { "type": "boolean", "default": false, "description": "true: a missing page or feature is a finding. false (default): page, dom and axe checks are skipped and listed under notChecked ('feature not detected') when their page is not there (404/410)." }
+      },
+      "allOf": [
+        { "if": { "properties": { "kind": { "enum": ["http", "rules-probe", "page"] } } }, "then": { "properties": { "match": { "required": ["path"] } } } },
+        { "if": { "properties": { "kind": { "const": "dom" } } }, "then": { "properties": { "match": { "required": ["selector"] } } } },
+        { "if": { "properties": { "kind": { "const": "secret-pattern" } } }, "then": { "properties": { "match": { "required": ["regex"] } } } },
+        { "if": { "properties": { "kind": { "not": { "enum": ["http", "rules-probe"] } } } }, "then": { "properties": { "match": { "not": { "required": ["method"] } } } } }
+      ]
+    }
+  }
+}

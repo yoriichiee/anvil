@@ -1,0 +1,38 @@
+{
+  "id": "supabase-rls",
+  "name": "Supabase RLS basics",
+  "version": "0.1.0",
+  "author": "Anvil contributors",
+  "license": "Apache-2.0",
+  "anvil": "^0.2",
+  "description": "Flags a service_role key in front-end code and asks a human to confirm row-level security on user tables.",
+  "tags": ["supabase", "database", "auth"],
+  "checks": [
+    {
+      "id": "service-role-in-bundle",
+      "kind": "secret-pattern",
+      "severity": "critical",
+      "title": "Supabase service_role key in front-end code",
+      "match": { "regex": "\"role\"\\s*:\\s*\"service_role\"" },
+      "why": "The service_role key bypasses row-level security entirely.",
+      "fix": "Rotate the key in Supabase and only use it on the server."
+    },
+    {
+      "id": "rest-root-open",
+      "kind": "http",
+      "severity": "medium",
+      "title": "REST root answers without a session",
+      "match": { "path": "/rest/v1/", "method": "GET", "status": [200] },
+      "why": "An open REST root often means tables are listable by anyone with the anon key.",
+      "fix": "Enable RLS on every table and add policies per role."
+    }
+  ],
+  "humanChecks": [
+    {
+      "id": "other-user-rows",
+      "prompt": "Signed in as user A, can you see any of user B's rows?",
+      "steps": ["Create two accounts", "Add a row as user B", "Sign in as user A and look for it"],
+      "screenshot": true
+    }
+  ]
+}

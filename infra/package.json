@@ -1,0 +1,21 @@
+{
+  "name": "anvil-infra",
+  "version": "0.2.0",
+  "private": true,
+  "description": "AWS CDK (TypeScript) for anvil.horvans.com: AnvilCert (us-east-1 ACM) + Anvil (S3 + CloudFront + HTTP API + Lambda + DynamoDB + KMS) in the project Region",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "synth": "cdk synth",
+    "diff": "cdk diff AnvilCert Anvil"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "2.270.0",
+    "constructs": "10.8.1"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.1",
+    "aws-cdk": "2.1142.0",
+    "tsx": "4.23.13",
+    "typescript": "5.9.3"
+  }
+}

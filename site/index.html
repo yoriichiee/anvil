@@ -1,0 +1,543 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anvil — check your AI-built app before launch</title>
+<meta name="description" content="Anvil checks your AI-built app before real users do: every page on phone and laptop, console errors, leaked keys, open Supabase and Firebase rules, users seeing each other's data. Then it guides you through the checks only a person can judge, and writes a fix brief your AI can act on. Open source.">
+<link rel="canonical" href="https://anvil.horvans.com/">
+<meta name="theme-color" content="#f7f7f7">
+<meta name="color-scheme" content="light">
+<link rel="icon" href="assets/landing/favicon.svg" type="image/svg+xml">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Anvil">
+<meta property="og:title" content="Anvil — check your AI-built app before launch">
+<meta property="og:description" content="Real checks with proof, guided human checks, and a fix brief for Lovable, Cursor or Claude. Open source. No 'Secure' badge — just evidence.">
+<meta property="og:url" content="https://anvil.horvans.com/">
+<meta property="og:image" content="https://anvil.horvans.com/assets/landing/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="The Anvil mark above a launch report where every failing check now passes.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Anvil — check your AI-built app before launch">
+<meta name="twitter:description" content="Real checks with proof, guided human checks, and a fix brief your AI can act on. Open source.">
+<meta name="twitter:image" content="https://anvil.horvans.com/assets/landing/og-image.png">
+<script src="assets/landing/early.js" data-motion></script>
+<link rel="stylesheet" href="assets/landing/landing.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<svg class="sprite" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+  <symbol id="i-anvil" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M8 4.5H22.5V9H19L16.5 13.5H19L21.5 19.5H6.5L9 13.5H12L10.5 9C7 9 3.8 7.8 1 5.6C3.3 4.9 5.6 4.5 8 4.5Z"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-q" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-ext" viewBox="0 0 24 24"><path d="M7 17 17 7M8 7h9v9"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></symbol>
+  <symbol id="i-laptop" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="11" rx="1.5"/><path d="M2 19h20"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+  <symbol id="i-git" viewBox="0 0 24 24"><path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/></symbol>
+  <symbol id="i-zap" viewBox="0 0 24 24"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+  <symbol id="i-loop" viewBox="0 0 24 24"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a3 3 0 0 1 3-3h15"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a3 3 0 0 1-3 3H3"/></symbol>
+</svg>
+
+<header class="nav" id="top">
+  <div class="nav-in">
+    <a class="brand" href="./" aria-label="Anvil home">
+      <svg class="brand-mark" width="22" height="22" aria-hidden="true" focusable="false"><use href="#i-anvil"/></svg>
+      <span>Anvil</span>
+    </a>
+    <nav class="nav-links" id="nav-links" aria-label="Main">
+      <a href="#how">How it works</a>
+      <a href="demo/">Demo</a>
+      <a href="addons/">Add-ons</a>
+      <a href="install/">Install guide</a>
+      <a href="https://github.com/yoriichiee/anvil" rel="noopener"><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-git"/></svg>GitHub</a>
+    </nav>
+    <div class="nav-act">
+      <a class="btn btn-primary btn-sm" href="#install">Install</a>
+      <button class="icon-btn nav-toggle" type="button" aria-expanded="false" aria-controls="nav-links">
+        <svg class="icon" width="18" height="18" aria-hidden="true"><use href="#i-menu"/></svg>
+        <span class="sr-only">Menu</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="main" tabindex="-1">
+
+<!-- ============================================================ hero -->
+<section class="hero" aria-labelledby="hero-h">
+  <div class="wrap hero-top">
+    <div class="hero-tags">
+      <span class="chip chip-lane">v0.2.0</span>
+      <span class="chip chip-soft">Open source · Apache-2.0</span>
+    </div>
+    <h1 id="hero-h" class="display">Check your AI&#8209;built app before&nbsp;launch.</h1>
+    <p class="hero-sub">Real checks with proof, guided human checks, and a fix list your AI can act&nbsp;on.</p>
+    <div class="hero-ctas">
+      <a class="btn btn-primary btn-lg" href="demo/">Try the demo <svg class="icon" width="16" height="16" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+      <a class="btn btn-secondary btn-lg" href="#install">Install</a>
+    </div>
+    <div class="oneliner">
+      <div class="cmd-box">
+        <span class="cmd-prompt" aria-hidden="true">$</span>
+        <code class="cmd-text" id="hero-cmd">curl -fsSL https://anvil.horvans.com/install.sh | sh</code>
+        <button class="copy-btn" type="button" data-copy="hero-cmd" aria-label="Copy install command">
+          <svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-copy"/></svg><span class="copy-label">Copy</span>
+        </button>
+      </div>
+      <p class="oneliner-foot"><span id="hero-cmd-label">macOS / Linux</span> · <a class="small-link" href="#install">Windows, Claude Code, Codex</a></p>
+    </div>
+  </div>
+
+  <div class="wrap stage">
+    <div class="stage-persp">
+      <figure class="screen">
+        <div class="screen-bar" aria-hidden="true">
+          <span class="screen-dots"><i></i><i></i><i></i></span>
+          <span class="screen-url"><svg class="icon" width="12" height="12"><use href="#i-anvil"/></svg>127.0.0.1:8795/anvil/</span>
+          <span class="screen-sp"></span>
+        </div>
+        <picture>
+          <source type="image/webp" srcset="assets/landing/shots/dashboard-overview-1440.webp 1440w, assets/landing/shots/dashboard-overview-2880.webp 2880w" sizes="(min-width: 1240px) 1144px, calc(100vw - 32px)">
+          <img class="screen-img" src="assets/landing/shots/dashboard-overview-1440.png" width="1440" height="900" fetchpriority="high" decoding="async" alt="The Anvil dashboard on sample data. A left sidebar lists automatic checks (13 of 18 done) and your own checks. The overview shows 10 passed, 0 failed, 9 to do and 61% done, with three steps: let the automatic checks finish, do your checks in the Test view, then send the report. The right panel shows check 2 of 5, “A guest sees only the shared notebook”, with steps, what good looks like, and Works, Broken and Not sure buttons.">
+        </picture>
+        <span class="shot-chip shot-chip-a" aria-hidden="true"><svg class="icon" width="13" height="13"><use href="#i-zap"/></svg>Automatic checks run by themselves</span>
+        <span class="shot-chip shot-chip-b" aria-hidden="true"><svg class="icon" width="13" height="13"><use href="#i-q"/></svg>A person answers: Works / Broken / Not sure</span>
+      </figure>
+    </div>
+    <p class="stage-cap">The real Anvil dashboard, running on its sample data.</p>
+  </div>
+</section>
+
+<!-- ============================================================ evidence -->
+<section class="sec sec-white" id="why" aria-labelledby="why-h">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <p class="eyebrow">The evidence</p>
+      <h2 id="why-h" class="h2">AI writes the app in an afternoon. It writes the holes just as&nbsp;fast.</h2>
+      <p class="lead">These aren't edge cases. They're what researchers keep finding when they look.</p>
+    </div>
+    <ol class="findings">
+      <li class="finding rv">
+        <div class="finding-top"><span class="sg sg-fail"><svg class="icon"><use href="#i-x"/></svg></span><span class="mini-h">Finding</span></div>
+        <p class="finding-num">45%</p>
+        <p class="finding-what">of coding tasks: the AI-generated code introduced a security flaw.</p>
+        <a class="src" href="https://www.veracode.com/press-release/ai-generated-code-poses-major-security-risks-in-nearly-half-of-all-development-tasks-veracode-research-reveals/" rel="noopener">Veracode, 2025 <svg class="icon" width="13" height="13" aria-hidden="true"><use href="#i-ext"/></svg><span class="sr-only">(opens source)</span></a>
+      </li>
+      <li class="finding rv">
+        <div class="finding-top"><span class="sg sg-fail"><svg class="icon"><use href="#i-x"/></svg></span><span class="mini-h">Finding</span></div>
+        <p class="finding-num">~5,000</p>
+        <p class="finding-what">of 380,000 vibe-coded apps scanned were leaking data.</p>
+        <a class="src" href="https://vibegraveyard.ai/story/redaccess-vibe-coded-apps-380k-data-exposure-study/" rel="noopener">RedAccess study, via Vibe Graveyard <svg class="icon" width="13" height="13" aria-hidden="true"><use href="#i-ext"/></svg><span class="sr-only">(opens source)</span></a>
+      </li>
+      <li class="finding rv">
+        <div class="finding-top"><span class="sg sg-fail"><svg class="icon"><use href="#i-x"/></svg></span><span class="mini-h">Finding</span></div>
+        <p class="finding-num">48 days</p>
+        <p class="finding-what">Lovable left thousands of projects exposed for 48&nbsp;days.</p>
+        <a class="src" href="https://thenextweb.com/news/lovable-vibe-coding-security-crisis-exposed" rel="noopener">The Next Web <svg class="icon" width="13" height="13" aria-hidden="true"><use href="#i-ext"/></svg><span class="sr-only">(opens source)</span></a>
+      </li>
+    </ol>
+    <p class="kicker rv">None of this took a genius attacker. It took nobody checking.</p>
+  </div>
+</section>
+
+<!-- ============================================================ how it works -->
+<section class="sec" id="how" aria-labelledby="how-h">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <p class="eyebrow">How it works</p>
+      <h2 id="how-h" class="h2">Three steps. Repeat until the list is&nbsp;empty.</h2>
+    </div>
+
+    <ol class="how-steps">
+      <!-- step 1 -->
+      <li class="how-step" id="step-1">
+        <div class="how-rail"><span class="step-num">1</span></div>
+        <div class="how-text rv">
+          <h3 class="h3">Machine checks, with proof</h3>
+          <p>Anvil opens every page in a real browser, on a phone and a laptop. Every finding comes with a screenshot, a file and line, or the request that proved it.</p>
+          <ul class="check-chips" aria-label="What Anvil checks automatically">
+            <li class="chip chip-accent"><svg class="icon" width="13" height="13" aria-hidden="true"><use href="#i-phone"/></svg><svg class="icon" width="13" height="13" aria-hidden="true"><use href="#i-laptop"/></svg>Every page, phone + laptop</li>
+            <li class="chip chip-accent">Console errors</li>
+            <li class="chip chip-accent">Sideways scroll</li>
+            <li class="chip chip-accent">Accessibility</li>
+            <li class="chip chip-accent">Leaked keys in code and built JS</li>
+            <li class="chip chip-accent">Open Supabase / Firebase rules</li>
+            <li class="chip chip-accent">Users seeing each other's data</li>
+          </ul>
+        </div>
+        <div class="how-vis">
+          <figure class="screen screen-sm rv">
+            <div class="screen-bar" aria-hidden="true"><span class="screen-dots"><i></i><i></i><i></i></span><span class="screen-url">Automatic checks</span><span class="screen-sp"></span></div>
+            <picture>
+              <source type="image/webp" srcset="assets/landing/shots/dashboard-checks-1440.webp 1440w, assets/landing/shots/dashboard-checks-2880.webp 2880w" sizes="(min-width: 980px) 640px, calc(100vw - 80px)">
+              <img class="screen-img" src="assets/landing/shots/dashboard-checks-1440.png" width="1440" height="900" loading="lazy" decoding="async" alt="Anvil's Automatic checks view on sample data, mid-run. A live log shows a page passing on phone, then failing on laptop with a console error (TypeError: Cannot read properties of undefined), with the screenshot it saved below.">
+            </picture>
+          </figure>
+          <p class="screen-note">Real run on Anvil's sample app: the laptop check fails with the console error that proves it.</p>
+        </div>
+      </li>
+
+      <!-- step 2 -->
+      <li class="how-step" id="step-2">
+        <div class="how-rail"><span class="step-num">2</span></div>
+        <div class="how-text rv">
+          <h3 class="h3">Human checks, guided</h3>
+          <p>Some things only a person can judge: does sign-up make sense, is the price right, does checkout feel safe. Anvil gives you short steps and three buttons. Attach a screenshot when something's off.</p>
+          <p class="muted small">Try the buttons. In Anvil, your answers go straight into the report.</p>
+        </div>
+        <div class="how-vis">
+          <div class="win manual-card rv">
+            <div class="manual-top">
+              <span class="manual-num">Check 3 of 8</span>
+              <span class="chip chip-soft"><svg class="icon" width="13" height="13" aria-hidden="true"><use href="#i-phone"/></svg>Phone</span>
+            </div>
+            <h4 class="manual-title">Can a new user sign up and keep their first note?</h4>
+            <ol class="num-steps small-steps">
+              <li><span>Open <code>/signup</code> on your phone.</span></li>
+              <li><span>Make an account with a new email.</span></li>
+              <li><span>Add a note, then refresh the page.</span></li>
+            </ol>
+            <div class="good-box"><p class="mini-h">What good looks like</p><p>The note is still there after the refresh.</p></div>
+            <div class="answer-block">
+              <div class="answer-row" role="group" aria-label="Your answer for check 3">
+                <button class="answer-btn" type="button" aria-pressed="false" data-ans="works"><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-check"/></svg>Works</button>
+                <button class="answer-btn is-on" type="button" aria-pressed="true" data-ans="broken"><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-x"/></svg>Broken</button>
+                <button class="answer-btn" type="button" aria-pressed="false" data-ans="unsure"><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-q"/></svg>Not sure</button>
+              </div>
+              <p class="shot-line" data-show="broken"><span class="chip chip-accent"><svg class="icon" width="13" height="13" aria-hidden="true"><use href="#i-image"/></svg>signup-refresh.png attached</span><span class="muted small">Note vanished after refresh.</span></p>
+              <p class="ans-status sr-only" aria-live="polite"></p>
+            </div>
+          </div>
+        </div>
+      </li>
+
+      <!-- step 3 -->
+      <li class="how-step" id="step-3">
+        <div class="how-rail"><span class="step-num">3</span></div>
+        <div class="how-text rv">
+          <h3 class="h3">A fix brief your AI can use</h3>
+          <p>You get the report with its evidence, a plain fix list, and prompts ready to paste into Lovable, Cursor or Claude. Your AI fixes. Anvil scans again. Repeat until nothing fails.</p>
+        </div>
+        <div class="how-vis">
+          <div class="win brief rv">
+            <div class="brief-head">
+              <span class="mini-h">Prompt for</span>
+              <div class="seg" role="tablist" aria-label="Prompt format">
+                <button class="seg-btn" type="button" role="tab" id="pt-lovable" aria-controls="pp" aria-selected="false" tabindex="-1" data-fmt="lovable">Lovable</button>
+                <button class="seg-btn" type="button" role="tab" id="pt-cursor" aria-controls="pp" aria-selected="false" tabindex="-1" data-fmt="cursor">Cursor</button>
+                <button class="seg-btn is-on" type="button" role="tab" id="pt-claude" aria-controls="pp" aria-selected="true" tabindex="0" data-fmt="claude">Claude</button>
+              </div>
+            </div>
+            <div class="brief-body" id="pp" role="tabpanel" aria-labelledby="pt-claude" tabindex="0">
+              <p class="brief-intro" data-intro-claude="Fix these 4 issues in acme-notes. Change nothing else, then run anvil_scan again." data-intro-cursor="@codebase Fix these 4 issues. Keep the diff small. Don't touch unrelated files." data-intro-lovable="Please fix these 4 problems in my app. Don't redesign anything.">Fix these 4 issues in acme-notes. Change nothing else, then run anvil_scan again.</p>
+              <ol class="brief-list">
+                <li>Remove the Stripe secret key from src/lib/pay.ts. Read it from a server-only env var. Rotate the key.</li>
+                <li>Turn on row level security for "notes": users read rows where user_id = auth.uid().</li>
+                <li>/pricing overflows at 390px: let the plan table scroll inside its own box.</li>
+                <li>/settings crashes when plan is null. Guard it.</li>
+              </ol>
+            </div>
+            <div class="loop" aria-label="The fix loop">
+              <div class="loop-node"><span class="loop-ic"><svg class="icon" width="14" height="14" aria-hidden="true"><use href="#i-copy"/></svg></span><span>Fix brief</span></div>
+              <span class="loop-line" aria-hidden="true"><i></i></span>
+              <div class="loop-node"><span class="loop-ic"><svg class="icon" width="14" height="14" aria-hidden="true"><use href="#i-arrow"/></svg></span><span>Your AI fixes</span></div>
+              <span class="loop-line" aria-hidden="true"><i></i></span>
+              <div class="loop-node loop-end"><span class="loop-ic"><svg class="icon" width="14" height="14" aria-hidden="true"><use href="#i-check"/></svg></span><span>Rescan: 0 failing</span></div>
+            </div>
+          </div>
+        </div>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<!-- ============================================================ setup -->
+<section class="sec sec-white" id="setup" aria-labelledby="setup-h">
+  <div class="wrap split">
+    <div>
+      <div class="sec-head rv">
+        <p class="eyebrow">Works with your setup</p>
+        <h2 id="setup-h" class="h2">Anvil gives your AI coding agent eyes and a QA&nbsp;team.</h2>
+      </div>
+      <ul class="setup-list">
+        <li class="setup-row rv"><div><h3 class="h4">Claude Code</h3><p>Add Anvil as an MCP server. Claude runs the scan, reads the report and proposes fixes you approve.</p></div><span class="chip chip-lane">MCP</span></li>
+        <li class="setup-row rv"><div><h3 class="h4">Codex</h3><p>Same tools, same report. One command to connect.</p></div><span class="chip chip-lane">MCP</span></li>
+        <li class="setup-row rv"><div><h3 class="h4">Any API key</h3><p>Bring your own key for the write-ups. It's kept in your system keychain.</p></div><span class="chip chip-lane">BYOK</span></li>
+        <li class="setup-row rv"><div><h3 class="h4">Free credits</h3><p>A few AI write-ups a month on us, with a hard cap. No card.</p></div><span class="chip chip-lane">capped</span></li>
+        <li class="setup-row rv"><div><h3 class="h4">No AI at all</h3><p>Every check still runs. The report and fix list use plain templates.</p></div><span class="chip chip-lane">templates</span></li>
+      </ul>
+    </div>
+    <div class="setup-vis">
+      <div class="win win-dark rv" role="img" aria-label="Example: connecting Anvil to Claude Code and asking it to check an app">
+        <div class="win-tabs win-tabs-dark" aria-hidden="true"><span class="win-tab is-active">claude</span></div>
+        <div class="log term" aria-hidden="true">
+          <p class="t-cmd"><span class="t-p">$</span> claude mcp add anvil -- anvil-mcp</p>
+          <p class="t-out">Added stdio MCP server anvil</p>
+          <p class="t-gap"></p>
+          <p class="t-user"><span class="t-p">&gt;</span> check my app before I launch it</p>
+          <p class="t-tool"><span class="t-dot">●</span> anvil_scan <span class="t-dim">{ target: "http://localhost:3000" }</span></p>
+          <p class="t-out t-ind">38 checks · 4 failing · 8 human checks waiting</p>
+          <p class="t-tool"><span class="t-dot">●</span> anvil_fix_brief <span class="t-dim">{ format: "claude" }</span></p>
+          <p class="t-out t-ind">4 fixes proposed. Approve to apply?</p>
+          <p class="t-user"><span class="t-p">&gt;</span> approve<span class="t-caret"></span></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ privacy -->
+<section class="sec" id="privacy" aria-labelledby="privacy-h">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <p class="eyebrow">Local mode and GitHub mode</p>
+      <h2 id="privacy-h" class="h2">Your code stays&nbsp;yours.</h2>
+    </div>
+    <div class="modes">
+      <article class="card mode rv">
+        <div class="mode-head"><h3 class="h3"><svg class="icon" width="18" height="18" aria-hidden="true"><use href="#i-laptop"/></svg>Local mode</h3><span class="badge badge-green">Default</span></div>
+        <p>Everything runs on your computer: the browser, the scan, the report. Nothing is uploaded.</p>
+        <ul class="ticks">
+          <li><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-check"/></svg>Your code never leaves your machine</li>
+          <li><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-check"/></svg>Uses the Chrome or Edge you already have</li>
+          <li><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-check"/></svg><span>Reports saved in <code>.anvil/runs/</code></span></li>
+        </ul>
+      </article>
+      <article class="card mode rv">
+        <div class="mode-head"><h3 class="h3"><svg class="icon" width="18" height="18" aria-hidden="true"><use href="#i-git"/></svg>GitHub mode</h3><span class="badge badge-amber">Coming soon</span></div>
+        <p>Connect a read-only GitHub App. We fetch a copy of the repo, scan it for leaked keys and open database rules, then delete the copy.</p>
+        <ul class="ticks">
+          <li><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-check"/></svg>Read-only access to the repos you pick</li>
+          <li><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-check"/></svg>Our servers never run your code</li>
+          <li><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-check"/></svg>Our servers never open your live site</li>
+        </ul>
+      </article>
+    </div>
+    <div class="redact rv">
+      <div class="redact-copy">
+        <h3 class="h4"><svg class="icon" width="16" height="16" aria-hidden="true"><use href="#i-lock"/></svg>Secrets are removed before anything reaches an AI</h3>
+        <p>If removing them fails for any reason, the AI call doesn't happen. Your report still works.</p>
+      </div>
+      <div class="redact-demo" role="img" aria-label="Example: STRIPE_SECRET equals a live key becomes STRIPE_SECRET equals removed by anvil">
+        <code class="rd-line rd-before" aria-hidden="true">STRIPE_SECRET=sk_live_51HxQ2v…</code>
+        <svg class="icon rd-arrow" width="16" height="16" aria-hidden="true"><use href="#i-arrow"/></svg>
+        <code class="rd-line rd-after" aria-hidden="true">STRIPE_SECRET=[removed by anvil]</code>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ honest -->
+<section class="sec sec-white" id="honest" aria-labelledby="honest-h">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <p class="eyebrow">Honest by design</p>
+      <h2 id="honest-h" class="h2">No <span class="secure"><svg class="icon" width="0.62em" height="0.62em" aria-hidden="true"><use href="#i-lock"/></svg>Secure<span class="secure-strike" aria-hidden="true"></span></span> badge. On&nbsp;purpose.</h2>
+      <p class="lead">A scan can prove a problem exists. It can't prove there are none. So every Anvil report says what was checked, when, and what wasn't.</p>
+    </div>
+    <div class="honest-grid">
+      <div class="card rv">
+        <h3 class="mini-h">Anvil checks</h3>
+        <ul class="ticks">
+          <li><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-check"/></svg>Every page it can reach, on phone and laptop</li>
+          <li><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-check"/></svg>Keys in your code and in the built JavaScript</li>
+          <li><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-check"/></svg>Database rules found in your code</li>
+          <li><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-check"/></svg>Whether one test user can open another's data</li>
+          <li><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-check"/></svg>What you told it in the human checks</li>
+        </ul>
+      </div>
+      <div class="card card-dashed rv">
+        <h3 class="mini-h">Anvil can't check</h3>
+        <ul class="ticks ticks-q">
+          <li><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-q"/></svg>Rules you changed in the Supabase or Firebase dashboard</li>
+          <li><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-q"/></svg>Business logic, like who is allowed a refund</li>
+          <li><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-q"/></svg>Live payments and real emails</li>
+          <li><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-q"/></svg>Pages behind a sign-in it wasn't given</li>
+          <li><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-q"/></svg>How the app holds up under heavy traffic</li>
+        </ul>
+      </div>
+    </div>
+    <div class="win report-foot rv" role="img" aria-label="Every report ends with: scanned on 2 November 2026, 38 checks, 3 not checked.">
+      <div class="win-status win-status-lg" aria-hidden="true">
+        <span>Scanned on <strong>2 Nov 2026, 14:41</strong></span><span class="sb-sep"></span><span><strong>38</strong> checks</span><span class="sb-sep"></span><span><strong>3</strong> not checked: dashboard-edited rules, payment webhooks, /admin (no test account)</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ add-ons -->
+<section class="sec" id="addons" aria-labelledby="addons-h">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <p class="eyebrow">Add-on marketplace</p>
+      <h2 id="addons-h" class="h2">Check packs for the tools you build&nbsp;with.</h2>
+      <p class="lead">Packs are plain JSON: checks and human steps. No code runs. Open source and reviewed by pull request.</p>
+    </div>
+    <ul class="packs">
+      <li class="pack rv">
+        <div class="pack-top"><code class="pack-id">supabase-rls</code><span class="chip chip-soft">rules-probe</span></div>
+        <h3 class="h4">Supabase RLS</h3>
+        <p>Every table has row level security, and signed-out visitors can't read rows.</p>
+      </li>
+      <li class="pack rv">
+        <div class="pack-top"><code class="pack-id">stripe-checkout</code><span class="chip chip-soft">secret-pattern</span></div>
+        <h3 class="h4">Stripe checkout</h3>
+        <p>No secret key in the browser, and the success page needs a real payment.</p>
+      </li>
+      <li class="pack rv">
+        <div class="pack-top"><code class="pack-id">auth-pages</code><span class="chip chip-soft">page · human</span></div>
+        <h3 class="h4">Auth pages</h3>
+        <p>Sign-up, sign-in and password reset work on a phone and refuse obvious mistakes.</p>
+      </li>
+    </ul>
+    <div class="build-pack rv">
+      <div class="build-copy">
+        <h3 class="h3">Build your own pack</h3>
+        <p>Write the checks you wish existed for your stack. Send a pull request; once it passes review, everyone can add it with <code>anvil addon add &lt;id&gt;</code>.</p>
+        <div class="row-btns">
+          <a class="btn btn-primary" href="addons/">Browse add-ons <svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+          <a class="btn btn-ghost" href="addons/">Build your own pack</a>
+        </div>
+      </div>
+      <pre class="json" aria-label="Example anvil-addon.json"><code>{
+  "id": "supabase-rls",
+  "anvil": "^0.2",
+  "checks": [{
+    "kind": "rules-probe",
+    "severity": "high",
+    "title": "Tables readable signed out"
+  }],
+  "humanChecks": [{
+    "prompt": "Can a signed-out visitor see notes?",
+    "screenshot": true
+  }]
+}</code></pre>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ pricing -->
+<section class="sec sec-white" id="pricing" aria-labelledby="pricing-h">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <p class="eyebrow">Pricing</p>
+      <h2 id="pricing-h" class="h2">Free to use. Paid plans&nbsp;later.</h2>
+      <p class="lead">Nothing to buy today. Join the waitlist and we'll write when the paid plans open.</p>
+    </div>
+    <div class="plans">
+      <article class="plan rv">
+        <div class="plan-head"><h3 class="h4">Free</h3><span class="badge badge-green">Available now</span></div>
+        <p class="price"><span class="price-v">₹0</span><span class="price-per">no card needed</span></p>
+        <ul class="ticks">
+          <li><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-check"/></svg>Unlimited local scans</li>
+          <li><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-check"/></svg>Every check and add-on pack</li>
+          <li><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-check"/></svg>Your own AI key, or no AI</li>
+          <li><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-check"/></svg>A few free AI write-ups a month</li>
+        </ul>
+        <a class="btn btn-secondary btn-lg plan-cta" href="#install">Install free</a>
+      </article>
+      <article class="plan plan-mid rv">
+        <div class="plan-head"><h3 class="h4">Pro</h3><span class="badge badge-amber">Coming soon</span></div>
+        <p class="price"><span class="price-v">₹499</span><span class="price-per">/ month</span></p>
+        <ul class="ticks">
+          <li><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-check"/></svg>Everything in Free</li>
+          <li><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-check"/></svg>GitHub mode for private repos</li>
+          <li><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-check"/></svg>More AI write-ups</li>
+          <li><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-check"/></svg>Scan history</li>
+        </ul>
+        <a class="btn btn-primary btn-lg plan-cta" href="mailto:hello@horvans.com?subject=Anvil%20waitlist">Join the waitlist</a>
+      </article>
+      <article class="plan rv">
+        <div class="plan-head"><h3 class="h4">Agency</h3><span class="badge badge-amber">Coming soon</span></div>
+        <p class="price"><span class="price-v">₹2,999</span><span class="price-per">/ month</span></p>
+        <ul class="ticks">
+          <li><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-check"/></svg>Everything in Pro</li>
+          <li><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-check"/></svg>Reports branded for your clients</li>
+          <li><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-check"/></svg>Many client projects</li>
+        </ul>
+        <a class="btn btn-secondary btn-lg plan-cta" href="mailto:hello@horvans.com?subject=Anvil%20waitlist">Join the waitlist</a>
+      </article>
+    </div>
+    <p class="muted small fine">Prices in Indian rupees, before tax. Plans may change before launch.</p>
+  </div>
+</section>
+
+<!-- ============================================================ install -->
+<section class="sec sec-dark" id="install" aria-labelledby="install-h">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <p class="eyebrow">Install</p>
+      <h2 id="install-h" class="h2">One line, then scan.</h2>
+      <p class="lead">The installers pin version 0.2.0, check its SHA-256, then install. You need Node 20 or newer and Chrome or Edge.</p>
+    </div>
+
+    <div class="tabs rv" data-tabs>
+      <div class="tablist" role="tablist" aria-label="Install for">
+        <button class="tab-btn" type="button" role="tab" id="t-win" aria-controls="p-win" aria-selected="false" tabindex="-1">Windows</button>
+        <button class="tab-btn" type="button" role="tab" id="t-mac" aria-controls="p-mac" aria-selected="true" tabindex="0">macOS / Linux</button>
+        <button class="tab-btn" type="button" role="tab" id="t-claude" aria-controls="p-claude" aria-selected="false" tabindex="-1">Claude Code</button>
+        <button class="tab-btn" type="button" role="tab" id="t-codex" aria-controls="p-codex" aria-selected="false" tabindex="-1">Codex</button>
+      </div>
+      <div class="tabpanel" role="tabpanel" id="p-win" aria-labelledby="t-win" tabindex="0" hidden>
+        <p class="panel-note">In PowerShell:</p>
+        <div class="cmd-box cmd-box-lg"><span class="cmd-prompt" aria-hidden="true">PS&gt;</span><code class="cmd-text" id="cmd-win">irm https://anvil.horvans.com/install.ps1 | iex</code><button class="copy-btn" type="button" data-copy="cmd-win" aria-label="Copy Windows install command"><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-copy"/></svg><span class="copy-label">Copy</span></button></div>
+      </div>
+      <div class="tabpanel" role="tabpanel" id="p-mac" aria-labelledby="t-mac" tabindex="0">
+        <p class="panel-note">In Terminal:</p>
+        <div class="cmd-box cmd-box-lg"><span class="cmd-prompt" aria-hidden="true">$</span><code class="cmd-text" id="cmd-mac">curl -fsSL https://anvil.horvans.com/install.sh | sh</code><button class="copy-btn" type="button" data-copy="cmd-mac" aria-label="Copy macOS and Linux install command"><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-copy"/></svg><span class="copy-label">Copy</span></button></div>
+      </div>
+      <div class="tabpanel" role="tabpanel" id="p-claude" aria-labelledby="t-claude" tabindex="0" hidden>
+        <p class="panel-note">Install Anvil first (Windows or macOS / Linux tab), then connect it:</p>
+        <div class="cmd-box cmd-box-lg"><span class="cmd-prompt" aria-hidden="true">$</span><code class="cmd-text" id="cmd-claude">claude mcp add anvil -- anvil-mcp</code><button class="copy-btn" type="button" data-copy="cmd-claude" aria-label="Copy Claude Code command"><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-copy"/></svg><span class="copy-label">Copy</span></button></div>
+        <p class="panel-note">Then ask Claude: “Check my app at localhost:3000 with Anvil.”</p>
+      </div>
+      <div class="tabpanel" role="tabpanel" id="p-codex" aria-labelledby="t-codex" tabindex="0" hidden>
+        <p class="panel-note">Install Anvil first (Windows or macOS / Linux tab), then connect it:</p>
+        <div class="cmd-box cmd-box-lg"><span class="cmd-prompt" aria-hidden="true">$</span><code class="cmd-text" id="cmd-codex">codex mcp add anvil -- anvil-mcp</code><button class="copy-btn" type="button" data-copy="cmd-codex" aria-label="Copy Codex command"><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-copy"/></svg><span class="copy-label">Copy</span></button></div>
+        <p class="panel-note">Then ask Codex: “Check my app at localhost:3000 with Anvil.”</p>
+      </div>
+    </div>
+
+    <div class="quick rv">
+      <p class="mini-h">Quick try, nothing installed</p>
+      <div class="cmd-box"><span class="cmd-prompt" aria-hidden="true">$</span><code class="cmd-text" id="cmd-quick">npx -y https://anvil.horvans.com/dl/anvil-0.2.0.tgz scan http://localhost:3000</code><button class="copy-btn" type="button" data-copy="cmd-quick" aria-label="Copy quick try command"><svg class="icon" width="15" height="15" aria-hidden="true"><use href="#i-copy"/></svg><span class="copy-label">Copy</span></button></div>
+      <p class="muted small">Prefer to read first? The <a href="install/">install guide</a> explains each step, and the <a href="demo/">demo</a> shows a real recorded run.</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap foot-in">
+    <div class="foot-brand">
+      <a class="brand" href="./"><svg class="brand-mark" width="20" height="20" aria-hidden="true" focusable="false"><use href="#i-anvil"/></svg><span>Anvil</span></a>
+      <p class="muted small">Launch checks for AI-built apps.</p>
+    </div>
+    <nav class="foot-links" aria-label="Footer">
+      <a href="https://github.com/yoriichiee/anvil" rel="noopener">GitHub</a>
+      <a href="demo/">Demo</a>
+      <a href="addons/">Add-ons</a>
+      <a href="install/">Install guide</a>
+      <a href="https://github.com/yoriichiee/anvil/blob/main/LICENSE" rel="noopener">Apache-2.0</a>
+    </nav>
+    <p class="foot-credit small muted">© 2026 Anvil contributors · by Horvans</p>
+  </div>
+</footer>
+
+<p class="sr-only" id="copy-status" aria-live="polite"></p>
+
+<script src="assets/landing/vendor/gsap.min.js" defer></script>
+<script src="assets/landing/vendor/ScrollTrigger.min.js" defer></script>
+<script src="assets/landing/vendor/lenis.min.js" defer></script>
+<script src="assets/landing/landing.js" defer></script>
+</body>
+</html>

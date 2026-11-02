@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anvil GitHub mode</title>
+<meta name="description" content="Sample /app/ page for Anvil GitHub mode. W3 owns the real one; this shows the API contract.">
+<style>
+  /* Dashboard tokens (dashboard/app.css): monochrome, no accent colour. Severity is shown by label + weight, never colour. */
+  :root { --bg:#f4f4f4; --surface:#fff; --fg:#0a0a0a; --muted:#525252; --line:#e5e5e5; --accent:#0a0a0a; --crit:#0a0a0a; --high:#0a0a0a; --med:#262626; --low:#525252; color-scheme: light; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.55 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+  .card { background: var(--surface); }
+  .sev.critical { background: var(--fg); color: #fff; padding: 1px 6px; border-radius: 4px; display: inline-block; }
+  main { max-width: 52rem; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { font-size: 1.6rem; margin: 0 0 4px; } h2 { font-size: 1.1rem; margin: 32px 0 8px; }
+  p.muted, .muted { color: var(--muted); }
+  button, .btn { font: inherit; padding: 10px 16px; border-radius: 8px; border: 1px solid var(--fg); background: var(--fg); color: var(--bg); cursor: pointer; text-decoration: none; display: inline-block; }
+  button.ghost { background: transparent; color: var(--fg); }
+  button:disabled { opacity: .5; cursor: progress; }
+  input, select { font: inherit; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); width: 100%; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; } .row > * { flex: 1 1 14rem; } .row > button { flex: 0 0 auto; }
+  .card { border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin: 10px 0; }
+  .sev { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+  .sev.high { color: var(--high); } .sev.medium { color: var(--med); } .sev.low, .sev.info { color: var(--low); }
+  code { font-family: ui-monospace, Consolas, monospace; font-size: .9em; word-break: break-all; }
+  .msg { padding: 10px 14px; border-left: 3px solid var(--accent); margin: 12px 0; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Anvil for GitHub repos</h1>
+  <p class="muted">Static checks only: leaked keys and Supabase / Firebase rules files. Anvil never runs your code here. For browser checks and human checks, use <a href="/install">local mode</a>.</p>
+  <div id="msg" class="msg" hidden role="status"></div>
+
+  <section id="signedOut" hidden>
+    <a class="btn" href="/api/auth/github/start">Sign in with GitHub</a>
+    <p class="muted">Read-only: Anvil asks for Contents (read) and Metadata (read) on the repos you pick.</p>
+  </section>
+
+  <section id="signedIn" hidden>
+    <div class="row"><span id="who"></span><button class="ghost" id="logout">Sign out</button></div>
+    <p class="muted" id="credits"></p>
+    <h2>Scan one of your repos</h2>
+    <div class="row">
+      <select id="repo" aria-label="Repository"></select>
+      <input id="ref" placeholder="branch or tag (optional)" aria-label="Branch or tag">
+      <button id="scan">Scan</button>
+    </div>
+    <p class="muted">Repo missing? <a id="install" href="#">Install the Anvil app on it</a>, then reload.</p>
+  </section>
+
+  <h2>Try a public repo</h2>
+  <div class="row">
+    <input id="repoUrl" placeholder="https://github.com/owner/repo" aria-label="Public repo URL">
+    <button id="demo">Scan public repo</button>
+  </div>
+
+  <section id="result" hidden>
+    <h2 id="resTitle"></h2>
+    <p class="muted" id="resSummary"></p>
+    <div id="findings"></div>
+    <h2>What Anvil did not check</h2>
+    <ul id="notChecked"></ul>
+  </section>
+</main>
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
+  const say = (t) => { $('msg').textContent = t; $('msg').hidden = !t; };
+  const api = async (path, body) => {
+    const opt = body ? { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body), credentials: 'same-origin' } : { credentials: 'same-origin' };
+    const r = await fetch(path, opt);
+    let j = null; try { j = await r.json(); } catch {}
+    if (!r.ok) throw Object.assign(new Error((j && j.message) || `Error ${r.status}`), { status: r.status, body: j });
+    return j;
+  };
+  const err = new URLSearchParams(location.search).get('error');
+  if (err) say({ denied: 'GitHub sign-in was cancelled.', state: 'Sign-in expired or came from another tab. Try again.', expired: 'Sign-in took too long. Try again.' }[err] || 'GitHub sign-in did not finish. Try again.');
+
+  function render(rep) {
+    $('result').hidden = false;
+    $('resTitle').textContent = `Report for ${rep.target.value}`;
+    const c = rep.summary.counts;
+    $('resSummary').textContent = `${c.critical} critical, ${c.high} high, ${c.medium} medium, ${c.low} low. Score ${rep.summary.score0to100}/100 for what was checked (not a security rating).`;
+    const box = $('findings'); box.replaceChildren();
+    if (!rep.findings.length) box.append(el('p', 'muted', 'No findings in what was checked.'));
+    for (const f of rep.findings) {
+      const card = el('div', 'card');
+      card.append(el('div', `sev ${f.severity}`, `${f.severity} · ${f.confidence}`), el('strong', null, f.title));
+      const where = [f.evidence.file, f.evidence.line && `line ${f.evidence.line}`].filter(Boolean).join(', ');
+      if (where) card.append(el('div', null, '')).lastChild.append(el('code', null, where));
+      if (f.evidence.response) card.append(el('div', 'muted', f.evidence.response));
+      card.append(el('p', null, f.why), el('p', null, `Fix: ${f.fix}`));
+      const ask = el('button', 'ghost', 'Explain with AI');
+      ask.onclick = async () => {
+        ask.disabled = true;
+        try { const a = await api('/api/ai', { task: 'explain', finding: { title: f.title, why: f.why, fix: f.fix, severity: f.severity, file: f.evidence.file, line: f.evidence.line } }); card.append(el('p', null, a.text)); loadMe(); }
+        catch (e) { say(e.status === 401 ? 'Sign in with GitHub to use free AI answers.' : e.message); }
+        finally { ask.disabled = false; }
+      };
+      card.append(ask);
+      box.append(card);
+    }
+    const nc = $('notChecked'); nc.replaceChildren();
+    for (const n of rep.notChecked) { const li = el('li'); li.append(el('strong', null, n.what + ': '), document.createTextNode(n.why)); nc.append(li); }
+  }
+
+  async function run(btn, fn) {
+    btn.disabled = true; say('Scanning... this can take up to 30 seconds.');
+    try { render(await fn()); say(''); } catch (e) { say(e.message); } finally { btn.disabled = false; }
+  }
+
+  async function loadMe() {
+    let me;
+    try { me = await api('/api/me'); } catch (e) { if (e.status === 503) say(e.message); return; }
+    $('signedOut').hidden = me.signedIn; $('signedIn').hidden = !me.signedIn;
+    if (!me.signedIn) return;
+    $('who').textContent = `Signed in as ${me.user.login}`;
+    $('credits').textContent = `Free AI answers: ${me.credits.remaining} of ${me.credits.limit} left this month.`;
+    $('install').href = me.installUrl;
+    if (!$('repo').options.length) {
+      try {
+        const { repos } = await api('/api/repos');
+        for (const r of repos) { const o = el('option', null, r.fullName); o.value = r.fullName; $('repo').append(o); }
+        if (!repos.length) say('No repos yet: install the Anvil app on at least one repo.');
+      } catch (e) { say(e.message); }
+    }
+  }
+
+  $('logout').onclick = async () => { try { await api('/api/logout', {}); } catch {} location.replace('/app/'); };
+  $('scan').onclick = () => run($('scan'), () => { const [owner, repo] = $('repo').value.split('/'); return api('/api/scan-repo', { owner, repo, ref: $('ref').value.trim() || undefined }); });
+  $('demo').onclick = () => run($('demo'), () => api('/api/demo/scan', { repoUrl: $('repoUrl').value.trim() }));
+  loadMe();
+})();
+</script>
+</body>
+</html>
